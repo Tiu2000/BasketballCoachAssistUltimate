@@ -1,0 +1,1961 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TIU Ultimate Coaching Suite</title>
+    <style>
+        /* --- GLOBAL & THEME --- */
+        :root {
+            --primary: #1a237e;     /* Deep Blue */
+            --accent: #ff6f00;      /* Basketball Orange */
+            --bg: #f0f2f5;
+            --success: #2e7d32;
+            --danger: #c62828;
+            --warning: #f57c00;
+            --equity: #0097a7;
+            --dark-panel: #222;
+        }
+        
+        * { box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+            background-color: var(--bg); 
+            color: #333; 
+            margin: 0; 
+            padding: 0; 
+            display: flex; 
+            flex-direction: column; 
+            min-height: 100vh; 
+        }
+
+        /* --- NAVIGATION --- */
+        .app-nav {
+            background: var(--primary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .nav-brand {
+            color: white;
+            font-weight: 800;
+            font-size: 1.2rem;
+            letter-spacing: 2px;
+            opacity: 0.9;
+        }
+
+        .nav-items { display: flex; align-items: center; }
+
+        .nav-btn {
+            background: transparent;
+            border: none;
+            color: rgba(255,255,255,0.6);
+            padding: 15px 20px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            border-bottom: 4px solid transparent;
+            transition: all 0.3s;
+        }
+        .nav-btn:hover { color: white; background: rgba(255,255,255,0.05); }
+        .nav-btn.active { color: white; border-bottom-color: var(--accent); background: rgba(255,255,255,0.1); }
+        
+        .icon-btn {
+            background: rgba(0,0,0,0.2);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: white;
+            border-radius: 50%;
+            width: 35px; 
+            height: 35px;
+            margin-left: 10px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.2rem;
+        }
+        .icon-btn:hover { background: rgba(255,255,255,0.1); }
+
+        /* --- VIEW MANAGEMENT --- */
+        .view-section { display: none; width: 100%; flex: 1; padding-bottom: 50px;}
+        .view-section.active { display: block; }
+
+        /* --- SHARED COMPONENTS --- */
+        .action-btn { padding: 8px 15px; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9rem; font-weight: 600; transition: 0.2s; }
+        .btn-blue { background: var(--primary); color: white; }
+        .btn-orange { background: var(--accent); color: white; }
+        .btn-red { background: var(--danger); color: white; }
+        .btn-green { background: var(--success); color: white; }
+        .btn-gray { background: #6c757d; color: white; }
+        
+        .panel { background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); padding: 20px; margin: 20px auto; max-width: 1100px; }
+
+        /* SCOREBOARD HEADER */
+        .scoreboard-bar {
+            background: #333;
+            color: white;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-radius: 8px 8px 0 0;
+            margin: -20px -20px 20px -20px;
+        }
+        .score-box { font-family: 'Courier New', monospace; font-size: 1.8rem; font-weight: bold; color: var(--accent); }
+        .score-label { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; color: #aaa; }
+
+        /* TIMEOUT DISPLAY */
+        .timeout-display { font-size: 0.8rem; color: #aaa; margin-top: 5px; }
+        .timeout-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #555; margin-right: 2px; }
+        .timeout-dot.active { background: var(--accent); }
+
+        /* ========================================= */
+        /* TAB 1: ROTATION TRACKER STYLES */
+        /* ========================================= */
+        .tr-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 15px; margin-bottom: 20px; }
+        .tr-brand h2 { margin: 0; color: var(--primary); }
+        .game-clock { font-family: 'Courier New', monospace; font-size: 2rem; font-weight: bold; color: #333; }
+        
+        .mode-container { display: flex; justify-content: center; align-items: center; background: #f9f9f9; padding: 10px; border-radius: 8px; margin-bottom: 20px; gap: 15px; }
+        .switch { position: relative; display: inline-block; width: 50px; height: 28px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--equity); }
+        input:checked + .slider:before { transform: translateX(22px); }
+
+        .game-board { display: grid; grid-template-columns: 1fr; gap: 20px; }
+        @media (min-width: 768px) { .game-board { grid-template-columns: 1fr 1fr; } }
+        .court-area, .bench-area { background: #fff; padding: 15px; border-radius: 8px; border: 1px solid #ddd; }
+        .court-area { border: 2px solid var(--primary); }
+
+        .player-card { display: flex; align-items: center; background: #fff; border: 1px solid #eee; border-radius: 6px; padding: 10px; margin-bottom: 8px; transition: 0.3s; }
+        .pos-badge { background: #eee; color: #555; font-size: 0.75rem; font-weight: bold; padding: 4px; border-radius: 4px; margin-right: 10px; width: 35px; text-align: center; }
+        .player-info { flex: 1; }
+        .bar-container { height: 6px; background: #eee; border-radius: 3px; margin-top: 5px; width: 100%; overflow: hidden; }
+        .status-bar { height: 100%; transition: width 0.5s, background-color 0.5s; }
+        .num-badge { background: #333; color: white; border-radius: 50%; width: 24px; height: 24px; font-size: 0.75rem; display: inline-flex; align-items: center; justify-content: center; margin-right: 5px; }
+
+        /* FOUL STYLES */
+        .foul-warning { border: 2px solid var(--warning); background-color: #fff8e1; }
+        .foul-danger { border: 2px solid var(--danger); background-color: #ffebee; }
+        .foul-out { opacity: 0.6; filter: grayscale(1); border: 2px solid #333; }
+
+        /* GAME LOG */
+        .game-log-container {
+            margin-top: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            max-height: 200px;
+            overflow-y: auto;
+            background: #fcfcfc;
+            padding: 10px;
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+        .log-entry { margin-bottom: 4px; border-bottom: 1px solid #eee; padding-bottom: 2px; }
+        .log-time { color: var(--primary); font-weight: bold; margin-right: 5px; }
+
+        /* ========================================= */
+        /* TAB 2: STAT TRACKER STYLES */
+        /* ========================================= */
+        #view-stats { background-color: #111; min-height: calc(100vh - 50px); color: white; padding-top: 1px; }
+        
+        .st-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; padding: 15px; }
+        .st-card { background: #333; padding: 15px; border-radius: 8px; text-align: center; cursor: pointer; border: 2px solid transparent; transition: 0.2s; position: relative;}
+        .st-card.selected { border-color: var(--accent); background: #444; }
+        .st-name { font-weight: bold; font-size: 1.1rem; display: block; margin-bottom: 5px; color: white; }
+        .st-detail { font-size: 0.9rem; color: #aaa; }
+        .st-num { position: absolute; top: 5px; left: 5px; font-size: 0.8rem; color: #777; font-weight: bold; }
+
+        .st-controls { position: fixed; bottom: 0; left: 0; width: 100%; background: #222; padding: 15px; border-top: 1px solid #444; z-index: 100; }
+        .st-buttons { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 10px; max-width: 1100px; margin: 0 auto 10px auto; }
+        .st-btn { padding: 15px 5px; border: none; border-radius: 5px; font-weight: bold; font-size: 1rem; color: white; cursor: pointer; position: relative; }
+        .st-btn:active { transform: scale(0.95); }
+        .kbd-hint { position: absolute; top: 2px; right: 4px; font-size: 0.6rem; color: rgba(255,255,255,0.5); font-family: monospace; }
+        
+        /* Stat Button Colors */
+        .sb-1 { background-color: #6c757d; }
+        .sb-2 { background-color: var(--accent); }
+        .sb-3 { background-color: #d35400; }
+        .sb-reb { background-color: #28a745; }
+        .sb-ast { background-color: #17a2b8; }
+        .sb-stl { background-color: #6610f2; }
+        .sb-blk { background-color: #e83e8c; }
+        .sb-to { background-color: #dc3545; }
+        .sb-foul { background-color: #343a40; border: 1px solid #555; }
+        .sb-miss { background-color: #444; color: #aaa; font-size: 0.8rem; }
+
+        .st-table-container { padding: 15px; margin-bottom: 220px; overflow-x: auto; }
+        .st-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; color: #ddd; }
+        .st-table th, .st-table td { padding: 10px; border-bottom: 1px solid #444; text-align: center; }
+        .st-table th { color: var(--accent); }
+        .st-table td:first-child { text-align: left; font-weight: bold; color: white; }
+
+        /* ========================================= */
+        /* SHOT CHART STYLES (NORTH-SOUTH)           */
+        /* ========================================= */
+        #shot-chart-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 3000; justify-content: center; align-items: center; flex-direction: column; }
+        
+        #shot-chart-container { 
+            position: relative; 
+            width: 90%; 
+            max-width: 500px; 
+            aspect-ratio: 50/47; 
+            background: #d2a679; 
+            border: 4px solid white; 
+            cursor: crosshair; 
+            overflow: hidden;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 500 470' xmlns='http://www.w3.org/2000/svg'%3E%3C!-- Court Floor --%3E%3Crect width='500' height='470' fill='%23d2a679'/%3E%3C!-- Lines --%3E%3Cg fill='none' stroke='white' stroke-width='4'%3E%3C!-- Lane --%3E%3Crect x='170' y='0' width='160' height='190'/%3E%3C!-- Free Throw Circle --%3E%3Ccircle cx='250' cy='190' r='60'/%3E%3C!-- Hoop Backboard --%3E%3Cline x1='220' y1='40' x2='280' y2='40' stroke-width='4'/%3E%3Ccircle cx='250' cy='52.5' r='7.5' stroke-width='2'/%3E%3C!-- 3 Point Line --%3E%3Cpath d='M 30 0 L 30 140 Q 30 140 30 140 A 237.5 237.5 0 0 0 470 140 L 470 0'/%3E%3C!-- Center Court Arc --%3E%3Cpath d='M 190 470 A 60 60 0 0 1 310 470' stroke-width='4'/%3E%3C/g%3E%3C/svg%3E");
+            background-size: cover;
+        }
+        
+        .shot-marker { 
+            position: absolute; 
+            width: 20px; /* Increased size for text */
+            height: 20px; 
+            border-radius: 50%; 
+            transform: translate(-50%, -50%); 
+            border: 2px solid white; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.5); 
+            pointer-events: none; 
+            /* New styles to display player number */
+            display: flex; 
+            justify-content: center; 
+            align-items: center;
+            font-size: 0.65rem; /* Smaller font for number */
+            color: white; 
+            font-weight: bold; 
+        }
+        .shot-make { background-color: var(--success); }
+        .shot-miss { background-color: var(--danger); opacity: 0.8; }
+
+        /* ========================================= */
+        /* TAB 3: DESIGNER STYLES */
+        /* ========================================= */
+        .designer-container { display: grid; grid-template-columns: 200px 1fr 200px; gap: 15px; max-width: 99vw; margin: 10px auto; padding: 0 10px; }
+        .tool-sidebar { background: white; padding: 15px; border-radius: 8px; }
+        .tool-btn { width: 100%; padding: 10px; margin-bottom: 5px; border: 1px solid #ddd; background: #f8f9fa; cursor: pointer; text-align: left; }
+        .tool-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+        
+        #court-wrapper { position: relative; background: white; padding: 5px; border: 2px solid #333; }
+        #basketball-court { 
+            width: 100%; aspect-ratio: 16/9; background-color: #e8c288; position: relative; overflow: hidden; 
+            background-image: url('Gemini_Generated_Image_1xubrk1xubrk1xub.png'); 
+            background-size: cover; 
+            background-position: center; 
+        }
+        
+        .hoop-assembly { position: absolute; top: 50%; transform: translateY(-50%); display: flex; align-items: center; z-index: 2; pointer-events: none; }
+        .hoop-left { left: 9%; flex-direction: row; }
+        .hoop-right { right: 9%; flex-direction: row-reverse; }
+        .hoop-backboard { width: 4px; height: 80px; background: white; border: 1px solid #ccc; }
+        .hoop-rim { width: 25px; height: 25px; border: 3px solid var(--accent); border-radius: 50%; margin: 0 -2px; }
+
+        .court-watermark { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 10rem; font-weight: 900; color: rgba(255, 255, 255, 0.2); pointer-events: none; z-index: 1; font-family: 'Arial Black', sans-serif; letter-spacing: 5px; text-shadow: 0px 2px 4px rgba(0,0,0,0.3); }
+        #drawing-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; cursor: crosshair; }
+        .draggable-obj { position: absolute; cursor: grab; z-index: 20; user-select: none; font-weight: bold; }
+        .drag-player { width: 35px; height: 35px; border-radius: 50%; color: white; border: 2px solid white; display:flex; justify-content:center; align-items:center; font-size: 1.1rem; }
+        
+        .seq-control-panel { background: #eee; padding: 10px; border-radius: 6px; margin-bottom: 10px; text-align: center; }
+        .seq-display { font-weight: bold; font-size: 1.1rem; color: var(--primary); margin: 5px 0; display: block; }
+        .seq-row { display: flex; gap: 5px; justify-content: center; margin-bottom: 5px; }
+
+        /* ========================================= */
+        /* TAB 4: HISTORY STYLES */
+        /* ========================================= */
+        #view-history { padding: 20px; }
+        .game-record { background: white; margin-bottom: 15px; padding: 15px; border-radius: 8px; border-left: 5px solid var(--primary); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .game-record h4 { margin: 0 0 10px 0; color: #333; }
+        .game-record table { width: 100%; font-size: 0.85rem; border-collapse: collapse; }
+        .game-record th, .game-record td { text-align: center; border-bottom: 1px solid #eee; padding: 4px; }
+
+        /* --- PRINT & MODAL --- */
+        @media print {
+            .app-nav, .add-controls, .data-controls, .tool-sidebar, .st-controls, .controls-row, .mode-container, .action-btn { display: none !important; }
+            body, #view-stats { background: white !important; color: black !important; }
+            .view-section { display: none; }
+            .view-section.active { display: block; }
+            .panel, .st-card, .st-grid { box-shadow: none; border: 1px solid #ccc; background: white !important; color: black !important; }
+            .st-name, .st-detail, .st-table td, .st-table th { color: black !important; }
+            .st-table-container { margin-bottom: 0; }
+            #court-wrapper { border: 1px solid black; }
+            .court-watermark { color: rgba(0,0,0,0.05); } 
+            .designer-container { display: block; max-width: 100%; }
+            .modal, #shot-chart-modal { display: none; } 
+        }
+
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; justify-content: center; align-items: center; }
+        .modal-content { background: white; width: 90%; max-width: 600px; padding: 20px; border-radius: 8px; }
+        .settings-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .settings-row input { width: 60px; padding: 5px; text-align: center; }
+        
+        #notification { position: fixed; top: 60px; left: 50%; transform: translateX(-50%); background: var(--success); color: white; padding: 10px 20px; border-radius: 20px; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 2000; }
+    </style>
+</head>
+<body>
+
+    <nav class="app-nav">
+        <div class="nav-brand">TIU</div>
+        <div class="nav-items">
+            <button class="nav-btn active" onclick="switchTab('tracker')">Rotation</button>
+            <button class="nav-btn" onclick="switchTab('stats')">Stats</button>
+            <button class="nav-btn" onclick="switchTab('designer')">Plays</button>
+            <button class="nav-btn" onclick="switchTab('history')">History</button>
+            <button class="icon-btn" onclick="openSettings()" title="Settings">⚙️</button>
+            <button class="icon-btn" id="sound-toggle" onclick="toggleSound()" title="Toggle Sound">🔊</button>
+        </div>
+    </nav>
+
+    <div id="notification">Action Recorded</div>
+
+    <div id="view-tracker" class="view-section active">
+        <div class="panel">
+            <div class="scoreboard-bar">
+                <div>
+                    <div class="score-label">HOME</div>
+                    <div class="score-box" id="score-us-display">0</div>
+                    <div class="timeout-display">Timeouts: <span id="to-dots-us"></span></div>
+                </div>
+                <div style="text-align:center;">
+                    <div class="score-label">VS</div>
+                    <span style="background:var(--accent); color:white; padding:2px 6px; border-radius:3px; font-size:0.8rem;" id="quarter-display">Q1</span>
+                    <div class="game-clock" id="clock-display" style="font-size:1.5rem; color:white;">08:00</div>
+                    <div style="margin-top:5px;">
+                        <button class="action-btn btn-orange" style="padding:2px 6px; font-size:0.7rem;" onclick="callTimeout('Full')">Full TO</button>
+                        <button class="action-btn btn-orange" style="padding:2px 6px; font-size:0.7rem;" onclick="callTimeout('30s')">30s TO</button>
+                    </div>
+                </div>
+                <div style="text-align:right;">
+                    <div class="score-label">GUEST</div>
+                    <div class="score-box" id="score-them-display">0</div>
+                </div>
+            </div>
+
+            <div class="tr-header">
+                <div class="tr-brand">
+                    <h2>Home Game Tracker</h2>
+                    <span style="color:#777">Manage Substitutions & Fatigue</span>
+                </div>
+            </div>
+
+            <div class="mode-container">
+                <span style="font-weight:bold; color:#777">Fatigue Mode</span>
+                <label class="switch">
+                    <input type="checkbox" id="mode-switch" onchange="toggleMode()">
+                    <span class="slider round"></span>
+                </label>
+                <span style="font-weight:bold; color:#777">Equal Play Mode</span>
+            </div>
+
+            <div class="controls-row" style="display:flex; gap:10px; margin-bottom:20px;">
+                <button id="game-toggle" class="action-btn btn-green" style="flex:2; padding:12px; font-size:1.1rem;" onclick="toggleGame()">Start Clock</button>
+                <button id="next-q-btn" class="action-btn btn-blue" style="flex:1; display:none;" onclick="nextQuarter()">Start Next Q</button>
+                <button class="action-btn btn-blue" onclick="openPlanner()">Auto-Plan</button>
+            </div>
+
+            <div id="coach-feedback" style="background:#e0f7fa; padding:10px; margin-bottom:15px; border-radius:4px; display:none; border-left:4px solid var(--equity);">
+                <span id="feedback-text"></span>
+                <button class="action-btn btn-blue" style="float:right; padding:4px 8px;" onclick="applySuggestion()">Swap</button>
+            </div>
+
+            <div class="game-board">
+                <div class="court-area">
+                    <h3 style="margin-top:0; border-bottom:1px solid #eee;">On Court <span id="court-count">0/5</span></h3>
+                    <div id="court-list"></div>
+                </div>
+                <div class="bench-area">
+                    <h3 style="margin-top:0; border-bottom:1px solid #eee;">Bench</h3>
+                    <div id="bench-list"></div>
+                </div>
+            </div>
+
+            <div class="game-log-container">
+                <div style="font-weight:bold; color:#777; margin-bottom:5px;">Game Log</div>
+                <div id="game-log-list"></div>
+            </div>
+
+            <div class="add-controls" style="background:#f8f9fa; padding:15px; margin-top:20px; border-radius:8px; display:flex; gap:10px; justify-content:center; flex-wrap: wrap;">
+                <input type="text" id="player-name" placeholder="Name" style="padding:8px; flex: 1; min-width: 100px;">
+                <input type="text" id="player-number" placeholder="#" style="padding:8px; width: 50px;">
+                <select id="player-position" style="padding:8px;">
+                    <option value="PG">PG</option><option value="SG">SG</option>
+                    <option value="SF">SF</option><option value="PF">PF</option><option value="C">C</option>
+                </select>
+                <button class="action-btn btn-blue" onclick="addPlayer()">+ Add</button>
+                <button class="action-btn btn-green" onclick="openBulkImport()">Bulk Import</button>
+                <button class="action-btn btn-orange" onclick="generateRecommendation()">Suggest Sub</button>
+            </div>
+
+            <div class="data-controls" style="margin-top:20px; text-align:center;">
+                <button class="action-btn" style="border:1px solid #ccc" onclick="exportTimeStats()">Export Time CSV</button>
+                <button class="action-btn" style="border:1px solid #ccc" onclick="window.print()">Print Report</button>
+                <button class="action-btn btn-red" onclick="resetAll()">Reset All Data</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="view-stats" class="view-section">
+        <div style="text-align: center; margin: 15px; color: #888;">Select a player, then tap a button or use keyboard shortcuts.</div>
+        
+        <div class="st-grid" id="st-player-grid"></div>
+
+        <div class="st-table-container">
+            <div style="background:#333; padding:10px; border-radius:8px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
+                <div style="color:white;">
+                    <span style="color:#aaa; font-size:0.8rem;">HOME</span> <strong style="font-size:1.5rem; color:var(--accent);" id="st-score-us">0</strong>
+                    <span style="color:#666; margin:0 5px;">-</span>
+                    <span style="color:#aaa; font-size:0.8rem;">GUEST</span> <strong style="font-size:1.5rem;" id="st-score-them">0</strong>
+                </div>
+                <div>
+                    <span style="color:#aaa; font-size:0.8rem; margin-right:5px;">Opponent Score:</span>
+                    <button class="action-btn" style="padding:4px 8px; font-size:0.8rem;" onclick="addOpponentScore(1)">+1</button>
+                    <button class="action-btn" style="padding:4px 8px; font-size:0.8rem;" onclick="addOpponentScore(2)">+2</button>
+                    <button class="action-btn" style="padding:4px 8px; font-size:0.8rem;" onclick="addOpponentScore(3)">+3</button>
+                </div>
+            </div>
+
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h3 style="color:white; margin:0;">Home Box Score</h3>
+                <div style="display:flex; gap:10px; align-items:center;">
+                    <label style="color:white; font-size:0.9rem;"><input type="checkbox" id="adv-stats-toggle" onchange="renderStats()"> Show Advanced Stats</label>
+                    <button class="action-btn btn-blue" onclick="toggleShotChartVis()">View Shot Chart</button>
+                    <button class="action-btn btn-green" onclick="copyGameSummary()">📋 Copy Summary</button>
+                    <button class="action-btn btn-orange" onclick="finishGame()">Finish Game & Save</button>
+                </div>
+            </div>
+            <table class="st-table" id="stat-table">
+                </table>
+            <button class="action-btn btn-green" style="margin-top:10px; width:100%;" onclick="exportGameStats()">Download Box Score CSV</button>
+        </div>
+
+        <div class="st-controls">
+            <div class="st-buttons">
+                <button class="st-btn sb-1" onclick="addStat('ft')">+1 FT <span class="kbd-hint">1</span></button>
+                <button class="st-btn sb-2" onclick="initShot('fg')">+2 FG <span class="kbd-hint">2</span></button>
+                <button class="st-btn sb-3" onclick="initShot('zp')">+3 PT <span class="kbd-hint">3</span></button>
+                <button class="st-btn sb-reb" onclick="addStat('reb')">REB <span class="kbd-hint">R</span></button>
+                <button class="st-btn sb-ast" onclick="addStat('ast')">AST <span class="kbd-hint">A</span></button>
+                <button class="st-btn sb-stl" onclick="addStat('stl')">STL <span class="kbd-hint">S</span></button>
+                <button class="st-btn sb-blk" onclick="addStat('blk')">BLK <span class="kbd-hint">B</span></button>
+                <button class="st-btn sb-to" onclick="addStat('to')">TO <span class="kbd-hint">T</span></button>
+            </div>
+            <div class="st-buttons" style="grid-template-columns: repeat(2, 1fr); margin-bottom:5px;">
+                <button class="st-btn sb-miss" onclick="addStat('mft')">Miss FT</button>
+                <button class="st-btn sb-miss" onclick="initShot('mfg')">Miss Field Goal (2/3)</button>
+            </div>
+            <div style="max-width:1100px; margin:0 auto; display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                <button class="st-btn sb-foul" onclick="addStat('pf')">FOUL <span class="kbd-hint">F</span></button>
+                <button class="st-btn" style="background:#555" onclick="undoStat()">UNDO LAST <span class="kbd-hint">U</span></button>
+            </div>
+        </div>
+    </div>
+
+    <div id="view-designer" class="view-section">
+        <div class="designer-container">
+            <div class="tool-sidebar">
+                <h3>TIU Tools</h3>
+                <button class="tool-btn active" id="tool-cut" onclick="setTool('cut')">✂️ Cut (Solid)</button>
+                <button class="tool-btn" id="tool-pass" onclick="setTool('pass')">🏀 Pass (Dashed)</button>
+                <button class="tool-btn" id="tool-dribble" onclick="setTool('dribble')">〰️ Dribble (Wavy)</button>
+                <button class="tool-btn" id="tool-screen" onclick="setTool('screen')">🛑 Screen (T)</button>
+                <hr>
+                <button class="tool-btn" onclick="addObj('player')">👤 Add Player</button>
+                <button class="tool-btn" onclick="addObj('text')">Aa Add Text</button>
+                <button class="tool-btn" style="color:red" onclick="clearCanvas(true)">🗑️ Clear Frame</button>
+                
+                <h4>Defensive Presets (E-W)</h4>
+                <button class="tool-btn" onclick="addDefense('23')">🛡️ 2-3 Zone</button>
+                <button class="tool-btn" onclick="addDefense('32')">🛡️ 3-2 Zone</button>
+                <button class="tool-btn" onclick="addDefense('man')">🛡️ Man-to-Man</button>
+
+                <div style="margin-top:20px; display:flex; gap:5px;">
+                    <div style="width:20px; height:20px; background:#1a237e; cursor:pointer;" onclick="setColor('#1a237e')"></div>
+                    <div style="width:20px; height:20px; background:#ff6f00; cursor:pointer;" onclick="setColor('#ff6f00')"></div>
+                    <div style="width:20px; height:20px; background:#c62828; cursor:pointer;" onclick="setColor('#c62828')"></div>
+                </div>
+            </div>
+
+            <div id="court-wrapper">
+                <div id="basketball-court">
+                    <div class="court-watermark">TIU</div>
+                    
+                    <div class="hoop-assembly hoop-left">
+                        <div class="hoop-backboard"></div>
+                        <div class="hoop-rim"></div>
+                    </div>
+                    <div class="hoop-assembly hoop-right">
+                        <div class="hoop-backboard"></div>
+                        <div class="hoop-rim"></div>
+                    </div>
+
+                    <canvas id="drawing-canvas"></canvas>
+                    <div id="objects-layer"></div>
+                </div>
+            </div>
+
+            <div class="tool-sidebar">
+                <h3>Play Sequence</h3>
+                <div class="seq-control-panel">
+                    <span class="seq-display" id="seq-step-display">Step 1 / 1</span>
+                    <div class="seq-row">
+                        <button class="action-btn btn-blue" onclick="prevStep()">Prev</button>
+                        <button class="action-btn btn-blue" onclick="nextStep()">Next</button>
+                    </div>
+                    <div class="seq-row">
+                        <button class="action-btn btn-green" onclick="addStep()" style="width:100%">+ Add Next Step</button>
+                    </div>
+                    <div class="seq-row" style="margin-top:5px;">
+                        <button class="action-btn" id="anim-btn" onclick="toggleAnimation()" style="width:100%; border:1px solid #333;">▶ Play Animation</button>
+                    </div>
+                     <button class="action-btn btn-red" onclick="deleteStep()" style="font-size:0.8rem; padding:4px;">Delete Step</button>
+                </div>
+                <hr>
+                <h3>Library</h3>
+                <input type="text" id="play-save-name" placeholder="Play Name" style="width:100%; margin-bottom:5px; padding:5px;">
+                <button class="tool-btn" onclick="saveToLibrary()">💾 Save to Library</button>
+                <select id="play-library-select" size="10" style="width:100%; margin-top:5px;"></select>
+                <button class="tool-btn" onclick="loadFromLibrary()">📂 Load Selected</button>
+                <hr>
+                <h3>Export</h3>
+                <button class="tool-btn" onclick="savePlayJSON()">💾 Save File</button>
+                <button class="tool-btn" onclick="document.getElementById('imp-file').click()">📂 Load File</button>
+                <input type="file" id="imp-file" style="display:none" onchange="loadPlayJSON(this)">
+                <button class="tool-btn" onclick="window.print()">🖨️ Print Play</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="view-history" class="view-section">
+        <h2 style="margin-bottom:20px;">Season History</h2>
+        <div id="history-container"></div>
+        <button class="action-btn btn-red" onclick="clearHistory()">Clear History</button>
+    </div>
+
+    <div id="planner-modal" class="modal">
+        <div class="modal-content">
+            <h3>TIU Auto-Scheduler</h3>
+            <div style="display:flex; gap:10px; margin-bottom:10px;">
+                <button class="action-btn btn-blue" onclick="generatePlan()" style="flex:1">Generate Plan</button>
+                <button class="action-btn" onclick="document.getElementById('planner-modal').style.display='none'" style="flex:1">Close</button>
+            </div>
+            <div id="plan-container" style="margin-top:15px; max-height:300px; overflow-y:auto; border:1px solid #eee; padding:5px;"></div>
+            <div style="margin-top:15px; display:flex; gap:10px; justify-content:center; border-top:1px solid #eee; padding-top:15px;">
+                <button class="action-btn btn-green" onclick="exportPlanCSV()">Export CSV</button>
+                <button class="action-btn btn-orange" onclick="printPlan()">Print Plan</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="settings-modal" class="modal">
+        <div class="modal-content">
+            <h3>Match Settings</h3>
+            <div class="settings-row">
+                <label>Quarter Length (Mins):</label>
+                <input type="number" id="set-q-len" value="8">
+            </div>
+            <div class="settings-row">
+                <label>Foul Limit:</label>
+                <input type="number" id="set-fouls" value="5">
+            </div>
+            <div class="settings-row">
+                <label>Timeouts Available:</label>
+                <input type="number" id="set-timeouts" value="3">
+            </div>
+            <button class="action-btn btn-green" style="width:100%;" onclick="saveSettings()">Save Settings</button>
+        </div>
+    </div>
+
+    <div id="bulk-modal" class="modal">
+        <div class="modal-content">
+            <h3>Bulk Player Import</h3>
+            <p style="font-size:0.9rem; color:#777;">Enter players as **Name,Number,Position** per line. (e.g., Lebron James,23,PF)</p>
+            <textarea id="bulk-input" rows="8" style="width:100%; padding:10px;"></textarea>
+            <div style="display:flex; gap:10px;">
+                <button class="action-btn btn-blue" onclick="processBulkImport()" style="flex:1">Import</button>
+                <button class="action-btn" onclick="document.getElementById('bulk-modal').style.display='none'" style="flex:1">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="shot-chart-modal" class="modal">
+        <div id="shot-chart-container">
+            <button class="action-btn btn-red" style="position:absolute; bottom:20px; right:20px; z-index:100; opacity:0.8;" onclick="closeShotChart()">Close</button>
+        </div>
+        <div style="color:white; margin-top:10px; font-size:1.1rem; text-align:center;">
+            Click on court to record shot location.
+        </div>
+    </div>
+
+    <script>
+        // --- DATA & STATE ---
+        let trPlayers = []; // Rotation Tracker Players
+        let stPlayers = []; // Stat Tracker Players (mirrors trPlayers for core info)
+        let settings = { qLen: 8, foulLim: 5, timeouts: 3, timeoutsLeft: 3 };
+        let gameActive = false;
+        let gameSeconds = settings.qLen * 60;
+        let clockInterval = null;
+        let currentQuarter = 1;
+        let scoreUs = 0;
+        let scoreThem = 0;
+        let gameLog = [];
+        let equityMode = false;
+        let selectedStatPlayerId = null;
+        let statHistory = []; // { playerId, type, pts }
+        let gameHistory = [];
+        
+        // Audio setup
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        let soundOn = true;
+
+        // --- SHOT CHART ---
+        let shotData = [];
+        let pendingShotType = null;
+
+        function initShot(type) {
+            if(!selectedStatPlayerId) { showNotif("Select a player first."); return; }
+            pendingShotType = type;
+            document.getElementById('shot-chart-modal').style.display = 'flex';
+            document.getElementById('shot-chart-container').onclick = recordShot;
+            showNotif("Tap court to record shot location");
+        }
+
+        function renderModalShots() {
+            const container = document.getElementById('shot-chart-container');
+            container.querySelectorAll('.shot-marker').forEach(m => m.remove());
+            shotData.forEach(shot => {
+                const dot = document.createElement('div');
+                const isMiss = shot.type.startsWith('m');
+                
+                // Find the player's number to display
+                const player = stPlayers.find(p => p.id === shot.playerId);
+                const playerNum = player ? (player.number || '0') : '?';
+                
+                dot.className = `shot-marker ${isMiss ? 'shot-miss' : 'shot-make'}`;
+                dot.style.left = `${shot.x}%`;
+                dot.style.top = `${shot.y}%`;
+                
+                // Add the player's number to the marker
+                dot.innerHTML = `<span>${playerNum}</span>`;
+                
+                // Visual distinction: 3-point shots ('zp' for make) are squares
+                if (shot.type === 'zp') {
+                     dot.style.borderRadius = '2px'; // Square for 3PT makes
+                }
+                
+                container.appendChild(dot);
+            });
+        }
+
+        function recordShot(e) {
+            if(!pendingShotType || !selectedStatPlayerId) return;
+            const rect = e.target.getBoundingClientRect();
+            const x = ((e.clientX - rect.left) / rect.width) * 100;
+            const y = ((e.clientY - rect.top) / rect.height) * 100;
+            shotData.push({ x, y, type: pendingShotType, playerId: selectedStatPlayerId });
+            addStat(pendingShotType);
+            pendingShotType = null;
+            document.getElementById('shot-chart-modal').style.display = 'none';
+        }
+
+        function closeShotChart() {
+            pendingShotType = null;
+            document.getElementById('shot-chart-modal').style.display = 'none';
+        }
+
+        function toggleShotChartVis() {
+            document.getElementById('shot-chart-modal').style.display = 'flex';
+            renderModalShots();
+            pendingShotType = null;
+        }
+
+        // --- SEASON MODE ---
+        function finishGame() {
+            if(!confirm("Finish this game?")) return;
+            const date = new Date().toLocaleDateString() + " " + new Date().toLocaleTimeString();
+            const gameRecord = {
+                date: date,
+                stats: JSON.parse(JSON.stringify(stPlayers)),
+                finalScore: scoreUs,
+                oppScore: scoreThem
+            };
+            gameHistory.unshift(gameRecord);
+            
+            stPlayers.forEach(p => {
+                p.stats = { ft: 0, fg: 0, zp: 0, mft:0, mfg:0, reb: 0, ast: 0, stl: 0, blk: 0, to: 0, pf: 0 };
+                p.plusMinus = 0;
+            });
+            statHistory = [];
+            shotData = [];
+            gameLog = [];
+            scoreUs = 0;
+            scoreThem = 0;
+            currentQuarter = 1;
+            gameSeconds = settings.qLen * 60;
+            settings.timeoutsLeft = settings.timeouts;
+            trPlayers.forEach(p => {
+                p.totalTime = 0; 
+                p.currentFatigue = 0; 
+                p.isOnCourt = false;
+            });
+            saveData();
+            renderStats();
+            renderTracker();
+            updateClockUI();
+            updateScoreUI();
+            renderLog();
+            renderHistory();
+            switchTab('history');
+            showNotif("Game Saved!");
+        }
+
+        function renderHistory() {
+            const container = document.getElementById('history-container');
+            container.innerHTML = '';
+            gameHistory.forEach(game => {
+                let tableHtml = `<table><tr><th>Name</th><th>PTS</th><th>REB</th><th>AST</th><th>PF</th><th>+/-</th></tr><tbody>`;
+                game.stats.sort((a,b) => (b.stats.ft + b.stats.fg*2 + b.stats.zp*3) - (a.stats.ft + a.stats.fg*2 + a.stats.zp*3));
+                game.stats.forEach(p => {
+                    const s = p.stats;
+                    const pts = s.ft + (s.fg*2) + (s.zp*3);
+                    tableHtml += `<tr>
+                        <td>${p.number ? '#'+p.number+' ':''}${p.name}</td>
+                        <td>${pts}</td>
+                        <td>${s.reb}</td>
+                        <td>${s.ast}</td>
+                        <td>${s.pf}</td>
+                        <td>${p.plusMinus || 0}</td>
+                    </tr>`;
+                });
+                tableHtml += `</tbody></table>`;
+                container.innerHTML += `
+                    <div class="game-record">
+                        <h4>${game.date} - FINAL: Home ${game.finalScore} vs Guest ${game.oppScore}</h4>
+                        ${tableHtml}
+                    </div>
+                `;
+            });
+        }
+
+        function clearHistory() {
+            if(confirm("Delete all saved game history?")) {
+                gameHistory = [];
+                saveData();
+                renderHistory();
+                showNotif("History Cleared");
+            }
+        }
+
+        // --- STATS TRACKER ---
+        function renderStats() {
+            const grid = document.getElementById('st-player-grid');
+            grid.innerHTML = '';
+            const newTbody = document.createElement('tbody');
+            const table = document.getElementById('stat-table');
+            table.querySelector('tbody')?.remove();
+            table.appendChild(newTbody);
+
+            const showAdv = document.getElementById('adv-stats-toggle').checked;
+            
+            let header = `<thead><tr><th>Player</th><th>${showAdv ? 'EFF' : 'PTS'}</th><th>${showAdv ? 'TS%' : 'REB'}</th><th>AST</th><th>STL</th><th>BLK</th><th>TO</th><th>PF</th><th>+/-</th></tr></thead>`;
+            newTbody.insertAdjacentHTML('beforebegin', header);
+
+            stPlayers.sort((a,b) => {
+                const ptsA = a.stats.ft + a.stats.fg*2 + a.stats.zp*3;
+                const ptsB = b.stats.ft + b.stats.fg*2 + b.stats.zp*3;
+                return ptsB - ptsA;
+            });
+
+            stPlayers.forEach(p => {
+                const s = p.stats;
+                const pts = s.ft + (s.fg*2) + (s.zp*3);
+                const fga = (s.fg + s.zp + (s.mfg || 0));
+                const fgm = s.fg + s.zp;
+                const fta = s.ft + (s.mft || 0);
+                const ftm = s.ft;
+                const eff = (pts + s.reb + s.ast + s.stl + s.blk) - ((fga - fgm) + (fta - ftm) + s.to);
+                let ts = 0;
+                if((fga + 0.44 * fta) > 0) ts = (pts / (2 * (fga + 0.44 * fta))) * 100;
+                
+                const card = document.createElement('div');
+                card.className = `st-card ${selectedStatPlayerId === p.id ? 'selected' : ''}`;
+                card.onclick = () => { selectedStatPlayerId = p.id; renderStats(); playSound('click'); };
+                card.innerHTML = `<span class="st-num">${p.number || ''}</span><span class="st-name">${p.name}</span><span class="st-detail">${pts} PTS | ${p.stats.pf} PF</span>`;
+                grid.appendChild(card);
+                
+                newTbody.innerHTML += `
+                    <tr>
+                        <td>${p.number ? '#'+p.number+' ':''}${p.name}</td>
+                        <td>${showAdv ? eff : pts}</td>
+                        <td>${showAdv ? ts.toFixed(1)+'%' : s.reb}</td>
+                        <td>${s.ast}</td><td>${s.stl}</td><td>${s.blk}</td><td>${s.to}</td><td>${s.pf}</td><td>${p.plusMinus || 0}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        function addStat(type) {
+            if(!selectedStatPlayerId) { showNotif("Select a player first."); return; }
+            const p = stPlayers.find(x => x.id === selectedStatPlayerId);
+            if(!p) return;
+            
+            let pts = 0;
+            
+            if(type === 'ft') { p.stats.ft++; pts=1; }
+            else if(type === 'fg') { p.stats.fg++; pts=2; }
+            else if(type === 'zp') { p.stats.zp++; pts=3; }
+            else if(type === 'mft') { p.stats.mft++; }
+            else if(type === 'mfg') { p.stats.mfg++; }
+            else { p.stats[type]++; }
+            
+            if(pts > 0) scoreUs += pts;
+            
+            statHistory.push({ playerId: p.id, type: type, pts: pts, time: `${currentQuarter}:${gameSeconds}` });
+            
+            const trP = trPlayers.find(x => x.id === selectedStatPlayerId);
+            if(trP && trP.isOnCourt) p.plusMinus += pts - (type.startsWith('m') ? 0 : 0); // Plus/Minus update for makes/misses
+            
+            trPlayers.filter(tp => tp.isOnCourt).forEach(tp => {
+                if(tp.id !== selectedStatPlayerId) {
+                    const st = stPlayers.find(s => s.id === tp.id);
+                    if(st) st.plusMinus += pts;
+                }
+            });
+            
+            // Foul check
+            if(type === 'pf') {
+                if(p.stats.pf >= settings.foulLim) {
+                    const trP = trPlayers.find(x => x.id === selectedStatPlayerId);
+                    if(trP) {
+                        trP.foulOut = true;
+                        if(trP.isOnCourt) subPlayer(trP.id);
+                        showNotif(`${p.name} has fouled out!`, 'danger');
+                    }
+                }
+            }
+            
+            updateScoreUI();
+            renderStats();
+            renderTracker();
+            showNotif(`${p.name}: +${type}`);
+            playSound(pts > 0 ? 'success' : 'click');
+            saveData();
+        }
+        
+        function undoStat() {
+            if(statHistory.length === 0) { showNotif("No actions to undo."); return; }
+            const last = statHistory.pop();
+            const p = stPlayers.find(x => x.id === last.playerId);
+            if(!p) return;
+            
+            p.stats[last.type]--;
+            if(last.pts > 0) scoreUs -= last.pts;
+            
+            if(p.stats.pf < settings.foulLim) {
+                const trP = trPlayers.find(x => x.id === last.playerId);
+                if(trP) trP.foulOut = false;
+            }
+
+            // Undo Plus/Minus
+            const trP = trPlayers.find(x => x.id === last.playerId);
+            if(trP && trP.isOnCourt) p.plusMinus -= last.pts;
+            
+            trPlayers.filter(tp => tp.isOnCourt).forEach(tp => {
+                if(tp.id !== last.playerId) {
+                    const st = stPlayers.find(s => s.id === tp.id);
+                    if(st) st.plusMinus -= last.pts;
+                }
+            });
+
+            updateScoreUI();
+            
+            addToLog(`Undo: ${last.type} for ${p.name}`);
+            saveData();
+            renderStats();
+            renderTracker();
+            showNotif("Undid last action");
+            playSound('click');
+        }
+
+        // --- PLAY DESIGNER ---
+        let canvas, ctx, isDrawing = false, currentTool = 'cut';
+        let drawPaths = [], currentPath = [], currentColor = '#1a237e';
+        let playSequence = [{ paths: [], objects: [] }];
+        let currentSeqIndex = 0;
+        let isPlaying = false;
+        let animInterval = null;
+
+        function initDesigner() {
+            canvas = document.getElementById('drawing-canvas');
+            ctx = canvas.getContext('2d');
+            
+            const start = (e) => {
+                isDrawing = true;
+                const r = canvas.getBoundingClientRect();
+                const x = (e.clientX || e.touches[0].clientX) - r.left;
+                const y = (e.clientY || e.touches[0].clientY) - r.top;
+                currentPath = [{x, y}];
+            };
+
+            const move = (e) => {
+                if(!isDrawing) return;
+                e.preventDefault();
+                const r = canvas.getBoundingClientRect();
+                const x = (e.clientX || e.touches[0].clientX) - r.left;
+                const y = (e.clientY || e.touches[0].clientY) - r.top;
+                currentPath.push({x, y});
+                redraw();
+            };
+
+            const end = () => {
+                if(!isDrawing) return;
+                isDrawing = false;
+                if(currentPath.length > 1) {
+                    drawPaths.push({ type: currentTool, color: currentColor, points: [...currentPath] });
+                }
+                currentPath = [];
+                redraw();
+                captureFrame();
+            };
+
+            canvas.addEventListener('mousedown', start);
+            canvas.addEventListener('mousemove', move);
+            window.addEventListener('mouseup', end);
+            canvas.addEventListener('touchstart', start);
+            canvas.addEventListener('touchmove', move);
+            window.addEventListener('touchend', end);
+            
+            updateSeqUI();
+            resizeCanvas();
+        }
+
+        function resizeCanvas() {
+            const wrapper = document.getElementById('basketball-court');
+            canvas.width = wrapper.clientWidth;
+            canvas.height = wrapper.clientHeight;
+            document.getElementById('objects-layer').style.width = wrapper.clientWidth + 'px';
+            document.getElementById('objects-layer').style.height = wrapper.clientHeight + 'px';
+            redraw();
+            loadFrame(currentSeqIndex);
+        }
+
+        function setTool(t) {
+            currentTool = t;
+            document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('tool-'+t).classList.add('active');
+        }
+
+        function setColor(c) {
+            currentColor = c;
+        }
+
+        function redraw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            const pathsToDraw = [...drawPaths, ...(isDrawing ? [{ type: currentTool, color: currentColor, points: currentPath }] : [])];
+            
+            pathsToDraw.forEach(path => {
+                ctx.beginPath();
+                ctx.strokeStyle = path.color;
+                ctx.lineWidth = 3;
+                ctx.lineJoin = 'round';
+                ctx.lineCap = 'round';
+                
+                if (path.type === 'pass') {
+                    ctx.setLineDash([5, 5]);
+                } else if (path.type === 'dribble') {
+                    ctx.setLineDash([1, 5]);
+                    ctx.lineWidth = 2;
+                } else {
+                    ctx.setLineDash([]);
+                }
+
+                if (path.points.length > 0) {
+                    ctx.moveTo(path.points[0].x, path.points[0].y);
+                    path.points.forEach(p => ctx.lineTo(p.x, p.y));
+                }
+                ctx.stroke();
+                
+                // Draw Screen (T) symbol for screen tool on final point
+                if(path.type === 'screen' && path.points.length > 0) {
+                    const last = path.points[path.points.length-1];
+                    ctx.fillStyle = path.color;
+                    ctx.setLineDash([]);
+                    ctx.beginPath();
+                    ctx.fillRect(last.x - 5, last.y - 10, 10, 20); // Vertical bar
+                    ctx.fillRect(last.x - 10, last.y - 10, 20, 5);  // Horizontal bar
+                }
+            });
+        }
+
+        function clearCanvas(confirm_clear = false) {
+            if(confirm_clear && !confirm("Clear all drawings from this frame?")) return;
+            drawPaths = [];
+            currentPath = [];
+            redraw();
+            captureFrame();
+        }
+        
+        // Draggable Object Logic
+        function makeDraggable(div) {
+            let isDrag = false;
+            let offset = {x:0, y:0};
+            
+            div.addEventListener('mousedown', (e) => {
+                e.stopPropagation();
+                isDrag = true;
+                const r = div.getBoundingClientRect();
+                offset = {x: e.clientX - r.left, y: e.clientY - r.top};
+                div.style.cursor = 'grabbing';
+            });
+            div.addEventListener('mouseup', () => {
+                isDrag = false;
+                div.style.cursor = 'grab';
+                captureFrame();
+            });
+            div.addEventListener('mousemove', (e) => {
+                if(!isDrag) return;
+                const r = document.getElementById('basketball-court').getBoundingClientRect();
+                div.style.left = (e.clientX - r.left) + 'px';
+                div.style.top = (e.clientY - r.top) + 'px';
+            });
+
+            div.oncontextmenu = (e) => { 
+                e.preventDefault(); 
+                if(confirm("Remove item?")) div.remove(); 
+                captureFrame();
+            };
+        }
+
+        function addObj(type, textOverride, x, y) {
+            const div = document.createElement('div');
+            div.className = 'draggable-obj';
+            div.style.left = x || '50%';
+            div.style.top = y || '50%';
+            
+            if(type === 'player') {
+                const num = prompt("Number?", "1");
+                div.innerHTML = `<div class="drag-player" style="background:${currentColor}">${num}</div>`;
+            } else if (type === 'text') {
+                const txt = textOverride || prompt("Text?", "Pick");
+                div.innerHTML = `<span style="background:white; padding:2px 5px; border:1px solid #333;">${txt}</span>`;
+            }
+            
+            makeDraggable(div);
+            document.getElementById('objects-layer').appendChild(div);
+            playSound('click');
+            captureFrame();
+        }
+        
+        function addDefense(type) {
+            const layer = document.getElementById('objects-layer');
+            layer.innerHTML = '';
+            
+            const createX = (top, left) => {
+                const div = document.createElement('div');
+                div.className = 'draggable-obj';
+                div.style.left = left;
+                div.style.top = top;
+                div.innerHTML = `<div class="drag-player" style="background:#c62828; font-weight:bold;">X</div>`;
+                makeDraggable(div);
+                layer.appendChild(div);
+            };
+
+            if(type === '23') {
+                createX('30%', '40%'); createX('70%', '40%'); 
+                createX('20%', '15%'); createX('50%', '15%'); createX('80%', '15%');
+            } else if(type === '32') {
+                createX('20%', '40%'); createX('50%', '40%'); createX('80%', '40%');
+                createX('30%', '15%'); createX('70%', '15%');
+            } else if(type === 'man') {
+                createX('50%', '30%'); createX('15%', '30%'); createX('85%', '30%');
+                createX('30%', '15%'); createX('70%', '15%');
+            }
+            captureFrame();
+        }
+
+        // Play Sequence Controls
+        function updateSeqUI() {
+            document.getElementById('seq-step-display').textContent = `Step ${currentSeqIndex + 1} / ${playSequence.length}`;
+            drawPaths = playSequence[currentSeqIndex].paths;
+            
+            const objectsLayer = document.getElementById('objects-layer');
+            objectsLayer.innerHTML = '';
+            playSequence[currentSeqIndex].objects.forEach(obj => {
+                if (obj.type === 'player') {
+                    addObj(obj.type, obj.text, obj.x, obj.y);
+                } else if (obj.type === 'text') {
+                    addObj(obj.type, obj.text, obj.x, obj.y);
+                }
+            });
+            redraw();
+        }
+
+        function captureFrame() {
+            // Save drawings
+            playSequence[currentSeqIndex].paths = JSON.parse(JSON.stringify(drawPaths));
+            
+            // Save objects (players/text)
+            playSequence[currentSeqIndex].objects = [];
+            document.querySelectorAll('#objects-layer .draggable-obj').forEach(div => {
+                const isPlayer = div.querySelector('.drag-player');
+                const textEl = isPlayer ? isPlayer : div.querySelector('span');
+                const type = isPlayer ? 'player' : 'text';
+                
+                playSequence[currentSeqIndex].objects.push({
+                    type: type,
+                    text: textEl ? textEl.innerText : '',
+                    x: div.style.left,
+                    y: div.style.top
+                });
+            });
+        }
+
+        function loadFrame(index) {
+            captureFrame(); // Save the current state before loading a new one
+            currentSeqIndex = index;
+            if(!playSequence[currentSeqIndex]) {
+                playSequence.push({ paths: [], objects: [] });
+            }
+            updateSeqUI();
+            redraw();
+        }
+
+        function nextStep() {
+            if(currentSeqIndex < playSequence.length - 1) {
+                loadFrame(currentSeqIndex + 1);
+            } else {
+                showNotif("This is the last step.");
+            }
+        }
+
+        function prevStep() {
+            if(currentSeqIndex > 0) {
+                loadFrame(currentSeqIndex - 1);
+            } else {
+                showNotif("This is the first step.");
+            }
+        }
+
+        function addStep() {
+            captureFrame();
+            
+            // Clone the current frame's objects but clear paths
+            const newFrame = {
+                paths: [], 
+                objects: JSON.parse(JSON.stringify(playSequence[currentSeqIndex].objects))
+            };
+            
+            playSequence.splice(currentSeqIndex + 1, 0, newFrame);
+            loadFrame(currentSeqIndex + 1);
+            playSound('success');
+        }
+
+        function deleteStep() {
+            if(playSequence.length <= 1) {
+                alert("Cannot delete the only step.");
+                return;
+            }
+            if(confirm("Delete this step?")) {
+                playSequence.splice(currentSeqIndex, 1);
+                if(currentSeqIndex >= playSequence.length) currentSeqIndex--;
+                loadFrame(currentSeqIndex);
+                playSound('click');
+            }
+        }
+
+        // --- ANIMATION ---
+        function toggleAnimation() {
+            const btn = document.getElementById('anim-btn');
+            if(isPlaying) {
+                clearInterval(animInterval);
+                isPlaying = false;
+                btn.innerHTML = "▶ Play Animation";
+                btn.classList.remove('btn-red');
+            } else {
+                if(playSequence.length < 2) {
+                    alert("Add steps first.");
+                    return;
+                }
+                captureFrame(); // Save current before starting
+                if(currentSeqIndex === playSequence.length - 1) loadFrame(0);
+                
+                isPlaying = true;
+                btn.innerHTML = "⏹ Stop";
+                btn.classList.add('btn-red');
+                
+                animInterval = setInterval(() => {
+                    if(currentSeqIndex < playSequence.length - 1) {
+                        loadFrame(currentSeqIndex + 1);
+                    } else {
+                        loadFrame(0);
+                    }
+                }, 1500);
+            }
+        }
+
+        function savePlayJSON() {
+            captureFrame();
+            const data = {
+                sequence: playSequence,
+                width: canvas.width,
+                height: canvas.height
+            };
+            const blob = new Blob([JSON.stringify(data)], {type:'application/json'});
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'TIU_PlaySequence.json';
+            a.click();
+            playSound('success');
+        }
+
+        function loadPlayJSON(inp) {
+            const f = inp.files[0];
+            const r = new FileReader();
+            r.onload = (e) => {
+                const d = JSON.parse(e.target.result);
+                if(d.sequence) {
+                    playSequence = d.sequence;
+                    loadFrame(0);
+                    playSound('success');
+                } else if (d.paths) {
+                    // Legacy single-frame support
+                    playSequence = [{ paths: d.paths, objects: d.objects || [] }];
+                    loadFrame(0);
+                    playSound('success');
+                }
+                
+            };
+            r.readAsText(f);
+        }
+
+        // Library functions (using localStorage)
+        function saveToLibrary() {
+            const name = document.getElementById('play-save-name').value.trim();
+            if(!name) { alert("Enter a name for the play."); return; }
+            captureFrame();
+            const library = JSON.parse(localStorage.getItem('TIU_PlayLibrary') || '{}');
+            library[name] = playSequence;
+            localStorage.setItem('TIU_PlayLibrary', JSON.stringify(library));
+            renderLibrary();
+            showNotif(`Play '${name}' saved to library`);
+        }
+
+        function renderLibrary() {
+            const select = document.getElementById('play-library-select');
+            select.innerHTML = '';
+            const library = JSON.parse(localStorage.getItem('TIU_PlayLibrary') || '{}');
+            
+            for(const name in library) {
+                const option = document.createElement('option');
+                option.textContent = name;
+                select.appendChild(option);
+            }
+            select.oncontextmenu = (e) => {
+                e.preventDefault();
+                const name = select.value;
+                if(name && confirm(`Delete play '${name}'?`)) {
+                    delete library[name];
+                    localStorage.setItem('TIU_PlayLibrary', JSON.stringify(library));
+                    renderLibrary();
+                }
+            };
+        }
+
+        function loadFromLibrary() {
+            const name = document.getElementById('play-library-select').value;
+            if(!name) { alert("Select a play to load."); return; }
+            const library = JSON.parse(localStorage.getItem('TIU_PlayLibrary') || '{}');
+            if(library[name]) {
+                playSequence = library[name];
+                loadFrame(0);
+                showNotif(`Play '${name}' loaded`);
+                document.getElementById('play-save-name').value = name;
+            }
+        }
+
+
+        // --- UTILS & INIT ---
+        function switchTab(view) {
+            document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('view-' + view).classList.add('active');
+            document.querySelector(`.nav-btn[onclick*="${view}"]`).classList.add('active');
+            
+            if(view === 'designer') resizeCanvas();
+            if(view === 'stats') renderStats();
+        }
+
+        function showNotif(msg, type='success') {
+            const notif = document.getElementById('notification');
+            notif.textContent = msg;
+            notif.style.backgroundColor = type === 'danger' ? varCss('--danger') : varCss('--success');
+            notif.style.opacity = 1;
+            setTimeout(() => { notif.style.opacity = 0; }, 1500);
+        }
+        
+        function varCss(name) {
+            return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+        }
+
+        function exportGameStats() {
+            let csv = "Player,PTS,REB,AST,STL,BLK,TO,PF,+/-,\n";
+            stPlayers.forEach(p => {
+                const s = p.stats;
+                const pts = s.ft + (s.fg*2) + (s.zp*3);
+                csv += `${p.name},${pts},${s.reb},${s.ast},${s.stl},${s.blk},${s.to},${s.pf},${p.plusMinus || 0}\n`;
+            });
+            downloadCSV(csv, "TIU_BoxScore.csv");
+        }
+
+        function copyGameSummary() {
+            let summary = `Final Score: Home ${scoreUs} - Guest ${scoreThem}\n\nBox Score:\n`;
+            summary += "Player | PTS | REB | AST | STL | BLK | TO | PF | +/-\n";
+            summary += "-------|-----|-----|-----|-----|-----|----|----|----\n";
+            stPlayers.sort((a,b) => (b.stats.ft + b.stats.fg*2 + b.stats.zp*3) - (a.stats.ft + a.stats.fg*2 + a.stats.zp*3));
+            stPlayers.forEach(p => {
+                const s = p.stats;
+                const pts = s.ft + (s.fg*2) + (s.zp*3);
+                summary += `${p.name} | ${pts} | ${s.reb} | ${s.ast} | ${s.stl} | ${s.blk} | ${s.to} | ${s.pf} | ${p.plusMinus || 0}\n`;
+            });
+
+            navigator.clipboard.writeText(summary).then(() => {
+                showNotif("Summary copied to clipboard!");
+            }, (err) => {
+                alert('Could not copy text: ' + err);
+            });
+        }
+        
+        // --- DATA SAVING & LOADING ---
+        function saveData() {
+            const data = { trPlayers, stPlayers, settings, gameActive, gameSeconds, currentQuarter, scoreUs, scoreThem, gameLog, equityMode, statHistory, gameHistory, shotData };
+            localStorage.setItem('TIU_CoachingData', JSON.stringify(data));
+        }
+
+        function loadData() {
+            const data = JSON.parse(localStorage.getItem('TIU_CoachingData'));
+            if(data) {
+                trPlayers = data.trPlayers || [];
+                stPlayers = data.stPlayers || [];
+                settings = data.settings || settings;
+                gameActive = data.gameActive || false;
+                gameSeconds = data.gameSeconds || settings.qLen * 60;
+                currentQuarter = data.currentQuarter || 1;
+                scoreUs = data.scoreUs || 0;
+                scoreThem = data.scoreThem || 0;
+                gameLog = data.gameLog || [];
+                equityMode = data.equityMode || false;
+                statHistory = data.statHistory || [];
+                gameHistory = data.gameHistory || [];
+                shotData = data.shotData || [];
+                
+                document.getElementById('mode-switch').checked = equityMode;
+                document.getElementById('quarter-display').textContent = `Q${currentQuarter}`;
+            }
+            renderTracker();
+            renderStats();
+            updateClockUI();
+            updateScoreUI();
+            renderLog();
+            renderHistory();
+        }
+        
+        function resetAll() {
+            if(!confirm("Are you sure you want to reset ALL data (Players, Stats, History, Settings)?")) return;
+            localStorage.removeItem('TIU_CoachingData');
+            localStorage.removeItem('TIU_PlayLibrary');
+            location.reload();
+        }
+
+        // --- PLAYER MANAGEMENT (TRACKER TAB) ---
+        function generateId() { return Date.now().toString(36) + Math.random().toString(36).substr(2, 5); }
+
+        function addPlayer() {
+            const name = document.getElementById('player-name').value.trim();
+            const number = document.getElementById('player-number').value.trim();
+            const position = document.getElementById('player-position').value;
+            if(!name) { alert("Name is required."); return; }
+            createPlayer(name, number, position);
+            document.getElementById('player-name').value = '';
+            document.getElementById('player-number').value = '';
+        }
+        
+        function createPlayer(name, number, position) {
+            const newId = generateId();
+            trPlayers.push({ id: newId, name: name, number: number, position: position, totalTime: 0, currentFatigue: 0, isOnCourt: false, foulOut: false, recoveryCounter: 0 });
+            stPlayers.push({ id: newId, name: name, number: number, plusMinus: 0, stats: { ft: 0, fg: 0, zp: 0, mft:0, mfg:0, reb: 0, ast: 0, stl: 0, blk: 0, to: 0, pf: 0 } });
+            saveData();
+            renderTracker();
+            renderStats();
+        }
+
+        function editPlayer(id) {
+            const p = trPlayers.find(x => x.id === id);
+            if(!p) return;
+            
+            const newName = prompt("Edit Name:", p.name);
+            const newNum = prompt("Edit Number:", p.number || "");
+            
+            if(newName && newName.trim() !== "") {
+                p.name = newName.trim();
+                p.number = newNum ? newNum.trim() : "";
+                
+                const stP = stPlayers.find(x => x.id === id);
+                if(stP) {
+                    stP.name = newName.trim();
+                    stP.number = newNum ? newNum.trim() : "";
+                }
+                
+                saveData();
+                renderTracker();
+                renderStats();
+                showNotif("Updated");
+                playSound('success');
+            }
+        }
+        
+        function openBulkImport() {
+            document.getElementById('bulk-modal').style.display = 'flex';
+        }
+        
+        function processBulkImport() {
+            let raw = document.getElementById('bulk-input').value;
+            if(!raw.trim()) return;
+
+            // AUTO-FIX broken lines (e.g. "1,PGFarcas")
+            raw = raw.replace(/(,[0-9]+,(?:PG|SG|SF|PF|C))([A-Z])/g, '$1\n$2');
+            
+            const lines = raw.split(/\r?\n/);
+            let count = 0;
+            lines.forEach(line => {
+                line = line.trim();
+                if(!line) return;
+                
+                const parts = line.split(',');
+                if(parts.length > 0) {
+                    let name = parts[0].trim();
+                    let num = "";
+                    let pos = "PG";
+                    
+                    if(parts.length >= 3) {
+                        num = parts[1].trim();
+                        pos = parts[2].trim().toUpperCase();
+                    } else if (parts.length === 2) {
+                        let p2 = parts[1].trim();
+                        if(p2.length <= 2 && !isNaN(p2)) num = p2;
+                        else pos = p2.toUpperCase();
+                    }
+                    
+                    if(name) {
+                        createPlayer(name, num, pos);
+                        count++;
+                    }
+                }
+            });
+            document.getElementById('bulk-modal').style.display = 'none';
+            document.getElementById('bulk-input').value = '';
+            showNotif(`${count} players imported!`);
+        }
+
+        // --- GAME CLOCK & ROTATION LOGIC (TRACKER TAB) ---
+        function toggleGame() {
+            gameActive = !gameActive;
+            const btn = document.getElementById('game-toggle');
+            const nextQBtn = document.getElementById('next-q-btn');
+            
+            if(gameActive) {
+                btn.textContent = "Pause Clock";
+                btn.className = "action-btn btn-red";
+                nextQBtn.style.display = 'none';
+                clockInterval = setInterval(updateClock, 1000);
+                playSound('whistle');
+            } else {
+                clearInterval(clockInterval);
+                btn.textContent = "Resume Clock";
+                btn.className = "action-btn btn-green";
+                if(gameSeconds === 0) nextQBtn.style.display = 'inline-block';
+                playSound('whistle');
+            }
+            saveData();
+        }
+
+        function updateClock() {
+            if(!gameActive) return;
+            
+            gameSeconds--;
+            
+            // Update time & fatigue for players on court
+            trPlayers.filter(p => p.isOnCourt).forEach(p => {
+                p.totalTime++;
+                p.currentFatigue = Math.min(100, p.currentFatigue + 1); // 1 fatigue per second
+            });
+            
+            // Recovery for players on bench
+            trPlayers.filter(p => !p.isOnCourt).forEach(p => {
+                p.recoveryCounter++;
+                if(p.recoveryCounter >= 3) { // Recover 1 fatigue every 3 seconds
+                    p.currentFatigue = Math.max(0, p.currentFatigue - 1);
+                    p.recoveryCounter = 0;
+                }
+            });
+            
+            updateClockUI();
+            renderTracker();
+            
+            if(gameSeconds <= 0) {
+                clearInterval(clockInterval);
+                gameActive = false;
+                document.getElementById('game-toggle').textContent = "End of Q";
+                document.getElementById('game-toggle').className = "action-btn btn-gray";
+                document.getElementById('next-q-btn').style.display = 'inline-block';
+                playSound('buzzer');
+                addToLog(`End of Quarter ${currentQuarter}`);
+                saveData();
+            }
+        }
+        
+        function nextQuarter() {
+            if(currentQuarter >= 4) {
+                alert("Game over! Please finish the game in the Stats tab.");
+                return;
+            }
+            currentQuarter++;
+            gameSeconds = settings.qLen * 60;
+            document.getElementById('quarter-display').textContent = `Q${currentQuarter}`;
+            document.getElementById('next-q-btn').style.display = 'none';
+            document.getElementById('game-toggle').textContent = "Start Clock";
+            document.getElementById('game-toggle').className = "action-btn btn-green";
+            trPlayers.forEach(p => { p.currentFatigue = Math.max(0, p.currentFatigue - 30); });
+            playSound('whistle');
+            addToLog(`Start of Quarter ${currentQuarter}`);
+            saveData();
+            renderTracker();
+        }
+
+        function updateClockUI() {
+            const m = Math.floor(gameSeconds / 60);
+            const s = gameSeconds % 60;
+            document.getElementById('clock-display').textContent = `${m<10?'0'+m:m}:${s<10?'0'+s:s}`;
+        }
+
+        function toggleMode() {
+            equityMode = document.getElementById('mode-switch').checked;
+            renderTracker();
+        }
+
+        function subPlayer(id) {
+            const stP = stPlayers.find(x => x.id === id);
+            if(stP && stP.stats.pf >= settings.foulLim) {
+                alert("Player has fouled out!");
+                return;
+            }
+            
+            const p = trPlayers.find(x => x.id === id);
+            const onCourt = trPlayers.filter(x => x.isOnCourt).length;
+            
+            if(!p.isOnCourt && onCourt >= 5) {
+                alert("Court is full (5 players). Sub someone out first.");
+                return;
+            }
+
+            p.isOnCourt = !p.isOnCourt;
+            
+            addToLog(`Sub: ${p.isOnCourt ? 'IN' : 'OUT'} ${p.name}`);
+            saveData();
+            renderTracker();
+            playSound('click');
+        }
+
+        function renderTracker() {
+            const courtList = document.getElementById('court-list');
+            const benchList = document.getElementById('bench-list');
+            courtList.innerHTML = '';
+            benchList.innerHTML = '';
+            
+            document.getElementById('court-count').innerText = `${trPlayers.filter(p=>p.isOnCourt).length}/5`;
+
+            let courtP = trPlayers.filter(p => p.isOnCourt);
+            let benchP = trPlayers.filter(p => !p.isOnCourt);
+            
+            if(equityMode) {
+                courtP.sort((a,b) => b.totalTime - a.totalTime);
+                benchP.sort((a,b) => a.totalTime - b.totalTime);
+            } else {
+                courtP.sort((a,b) => b.currentFatigue - a.currentFatigue);
+                benchP.sort((a,b) => a.currentFatigue - b.currentFatigue);
+            }
+
+            const renderCard = (p) => {
+                const isCourt = p.isOnCourt;
+                const fatigue = p.currentFatigue;
+                const foulClass = p.foulOut ? 'foul-out' : (stPlayers.find(s=>s.id===p.id)?.stats.pf >= settings.foulLim - 1 ? 'foul-danger' : (stPlayers.find(s=>s.id===p.id)?.stats.pf >= settings.foulLim - 2 ? 'foul-warning' : ''));
+                const timeDisplay = isCourt ? `Time: ${formatTime(p.totalTime)}` : `Rec: ${formatTime(p.totalTime)}`;
+                
+                const card = document.createElement('div');
+                card.className = `player-card ${foulClass}`;
+                card.onclick = () => subPlayer(p.id);
+                card.oncontextmenu = (e) => { e.preventDefault(); editPlayer(p.id); };
+                
+                card.innerHTML = `
+                    <div class="num-badge">${p.number || ''}</div>
+                    <span class="pos-badge">${p.position}</span>
+                    <div class="player-info">
+                        <strong>${p.name}</strong>
+                        <div style="font-size:0.8rem; color:#666; display:flex; justify-content:space-between;">
+                            <span>${timeDisplay}</span>
+                            <span>Fatigue: ${fatigue}%</span>
+                        </div>
+                        <div class="bar-container" title="Fatigue">
+                            <div class="status-bar" style="width:${fatigue}%; background-color:${fatigue > 70 ? varCss('--danger') : (fatigue > 40 ? varCss('--warning') : varCss('--success'))};"></div>
+                        </div>
+                    </div>
+                    <div style="font-size:0.8rem; margin-left:10px; text-align:right;">
+                        <div style="font-weight:bold; color:${stPlayers.find(s=>s.id===p.id)?.stats.pf >= settings.foulLim ? varCss('--danger') : '#333'};">${stPlayers.find(s=>s.id===p.id)?.stats.pf || 0} PF</div>
+                    </div>
+                `;
+                return card;
+            };
+
+            courtP.forEach(p => courtList.appendChild(renderCard(p)));
+            benchP.forEach(p => benchList.appendChild(renderCard(p)));
+            
+            if (document.getElementById('coach-feedback').style.display !== 'none') {
+                generateRecommendation(true); // Re-run recommendation to update UI
+            }
+        }
+        
+        function formatTime(totalSeconds) {
+            const h = Math.floor(totalSeconds / 3600);
+            const m = Math.floor((totalSeconds % 3600) / 60);
+            const s = totalSeconds % 60;
+            if(h > 0) return `${h}h ${m}m`;
+            return `${m<10?'0'+m:m}:${s<10?'0'+s:s}`;
+        }
+        
+        function generateRecommendation(isPassive = false) {
+            const c = trPlayers.filter(p=>p.isOnCourt && !p.foulOut); 
+            const b = trPlayers.filter(p=>!p.isOnCourt && !p.foulOut); 
+            if(c.length === 0 || b.length === 0) {
+                if(!isPassive) alert("Need players on court and on bench.");
+                document.getElementById('coach-feedback').style.display = 'none';
+                return;
+            }
+            
+            let outPlayer, inPlayer;
+
+            if(equityMode) {
+                c.sort((x,y) => y.totalTime - x.totalTime); // Out: highest time
+                b.sort((x,y) => x.totalTime - y.totalTime); // In: lowest time
+            } else {
+                c.sort((x,y) => y.currentFatigue - x.currentFatigue); // Out: highest fatigue
+                b.sort((x,y) => x.currentFatigue - y.currentFatigue); // In: lowest fatigue
+            }
+
+            outPlayer = c[0];
+            inPlayer = b[0];
+
+            if(outPlayer.id === inPlayer.id) {
+                document.getElementById('coach-feedback').style.display = 'none';
+                return;
+            }
+            
+            document.getElementById('feedback-text').innerHTML = `Sub OUT <b>${outPlayer.name}</b> (${equityMode ? 'Max Time' : outPlayer.currentFatigue+'% Fatigue'}), IN <b>${inPlayer.name}</b> (${equityMode ? 'Min Time' : inPlayer.currentFatigue+'% Fatigue'})`;
+            document.getElementById('coach-feedback').dataset.outId = outPlayer.id;
+            document.getElementById('coach-feedback').dataset.inId = inPlayer.id;
+            document.getElementById('coach-feedback').style.display = 'block';
+        }
+        
+        function applySuggestion() {
+            const feedback = document.getElementById('coach-feedback');
+            const outId = feedback.dataset.outId;
+            const inId = feedback.dataset.inId;
+            
+            if(outId && inId) {
+                subPlayer(outId); // Sub out
+                subPlayer(inId); // Sub in
+                feedback.style.display = 'none';
+            }
+        }
+
+        // --- GAME LOG ---
+        function addToLog(msg) {
+            const time = `${Math.floor(gameSeconds / 60)}:${(gameSeconds % 60).toString().padStart(2, '0')}`;
+            gameLog.unshift({ q: currentQuarter, time: time, msg: msg });
+            if(gameLog.length > 50) gameLog.pop();
+            renderLog();
+            saveData();
+        }
+
+        function renderLog() {
+            const list = document.getElementById('game-log-list');
+            list.innerHTML = '';
+            gameLog.forEach(l => {
+                list.innerHTML += `<div class="log-entry"><span class="log-time">Q${l.q} ${l.time}</span> ${l.msg}</div>`;
+            });
+        }
+
+        // --- SETTINGS ---
+        function openSettings() {
+            document.getElementById('set-q-len').value = settings.qLen;
+            document.getElementById('set-fouls').value = settings.foulLim;
+            document.getElementById('set-timeouts').value = settings.timeouts;
+            document.getElementById('settings-modal').style.display = 'flex';
+        }
+
+        function saveSettings() {
+            settings.qLen = parseInt(document.getElementById('set-q-len').value);
+            settings.foulLim = parseInt(document.getElementById('set-fouls').value);
+            settings.timeouts = parseInt(document.getElementById('set-timeouts').value);
+            
+            if(settings.qLen <= 0 || settings.foulLim <= 0 || settings.timeouts < 0) {
+                alert("Settings values must be positive.");
+                return;
+            }
+            
+            settings.timeoutsLeft = settings.timeouts;
+            gameSeconds = settings.qLen * 60;
+            updateClockUI();
+            saveData();
+            renderTracker();
+            updateScoreUI();
+            document.getElementById('settings-modal').style.display = 'none';
+            showNotif("Settings Saved");
+        }
+
+        // --- SCOREBOARD & TIMEOUTS ---
+        function updateScoreUI() {
+            document.getElementById('score-us-display').innerText = scoreUs;
+            document.getElementById('score-them-display').innerText = scoreThem;
+            document.getElementById('st-score-us').innerText = scoreUs;
+            document.getElementById('st-score-them').innerText = scoreThem;
+            
+            let dotsHtml = '';
+            for(let i=0; i<settings.timeouts; i++) {
+                dotsHtml += `<div class="timeout-dot ${i < settings.timeoutsLeft ? 'active' : ''}"></div>`;
+            }
+            document.getElementById('to-dots-us').innerHTML = dotsHtml;
+        }
+
+        function callTimeout(type) {
+            if(settings.timeoutsLeft > 0) {
+                if(gameActive) toggleGame();
+                settings.timeoutsLeft--;
+                addToLog(`Timeout (${type}) Called`);
+                updateScoreUI();
+                playSound('whistle');
+                saveData();
+                showNotif(`${type} Timeout Called`);
+            } else {
+                alert("No timeouts left!");
+            }
+        }
+        
+        function addOpponentScore(points) {
+            scoreThem += points;
+            
+            // Update Plus/Minus for all players on court
+            trPlayers.forEach(p => {
+                if(p.isOnCourt) {
+                    const st = stPlayers.find(s => s.id === p.id);
+                    if(st) {
+                        if(st.plusMinus) st.plusMinus -= points;
+                        else st.plusMinus = -points;
+                    }
+                }
+            });
+            
+            updateScoreUI();
+            addToLog(`Guest Score: +${points}`);
+            playSound('click');
+            saveData();
+        }
+
+        // --- INITIALIZATION ---
+        window.onload = () => {
+            loadData();
+            initDesigner();
+            renderLibrary();
+        };
+
+        window.onresize = resizeCanvas;
+
+        // Keyboard Shortcuts for Stats Tab
+        document.addEventListener('keydown', (e) => {
+            if (document.querySelector('.view-section.active')?.id !== 'view-stats') return;
+            const key = e.key.toLowerCase();
+
+            if (key === '1') addStat('ft');
+            if (key === '2') initShot('fg');
+            if (key === '3') initShot('zp');
+            if (key === 'r') addStat('reb');
+            if (key === 'a') addStat('ast');
+            if (key === 's') addStat('stl');
+            if (key === 'b') addStat('blk');
+            if (key === 't') addStat('to');
+            if (key === 'f') addStat('pf');
+            if (key === 'u') undoStat();
+        });
+
+        function toggleSound() {
+            soundOn = !soundOn;
+            document.getElementById('sound-toggle').innerHTML = soundOn ? '🔊' : '🔇';
+            if (soundOn && audioCtx.state === 'suspended') audioCtx.resume();
+        }
+
+        function playSound(type) {
+            if (!soundOn) return;
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            const now = audioCtx.currentTime;
+
+            if (type === 'buzzer') {
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(150, now);
+                osc.frequency.exponentialRampToValueAtTime(100, now + 1);
+                gainNode.gain.setValueAtTime(0.5, now);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 1);
+                osc.start(now);
+                osc.stop(now + 1);
+            } else if (type === 'whistle') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(2000, now);
+                osc.frequency.linearRampToValueAtTime(1500, now + 0.1);
+                gainNode.gain.setValueAtTime(0.3, now);
+                gainNode.gain.linearRampToValueAtTime(0.01, now + 0.3);
+                osc.start(now);
+                osc.stop(now + 0.3);
+            } else if (type === 'success') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(800, now);
+                osc.frequency.exponentialRampToValueAtTime(1200, now + 0.1);
+                gainNode.gain.setValueAtTime(0.3, now);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                osc.start(now);
+                osc.stop(now + 0.3);
+            } else if (type === 'click') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(440, now);
+                gainNode.gain.setValueAtTime(0.1, now);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+                osc.start(now);
+                osc.stop(now + 0.1);
+            }
+        }
+
+        // --- ROTATION PLANNER ---
+        function exportTimeStats() {
+            let csv = "Player,Position,Total Time (s),Total Time (m:s),Fatigue (%)\n";
+            trPlayers.sort((a,b) => b.totalTime - a.totalTime);
+            trPlayers.forEach(p => {
+                csv += `${p.name},${p.position},${p.totalTime},${formatTime(p.totalTime)},${p.currentFatigue}\n`;
+            });
+            downloadCSV(csv, "TIU_TimeStats.csv");
+        }
+
+        function downloadCSV(csv, filename) {
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = filename;
+            link.click();
+        }
+
+        function openPlanner() {
+            document.getElementById('planner-modal').style.display = 'flex';
+            document.getElementById('plan-container').innerHTML = '';
+        }
+
+        function generatePlan() {
+            const p = [...trPlayers];
+            if(p.length < 5) {
+                alert("Need 5+ players to generate a rotation plan.");
+                return;
+            }
+
+            // Sort by position to try and ensure varied lineups
+            const posOrder = { 'PG': 1, 'SG': 2, 'SF': 3, 'PF': 4, 'C': 5 };
+            p.sort((a, b) => (posOrder[a.position] || 6) - (posOrder[b.position] || 6));
+            
+            let html = "<table style='width:100%; border-collapse:collapse; border:1px solid #333;'><tr><th style='border:1px solid #333; padding:8px; text-align:left;'>Period</th><th style='border:1px solid #333; padding:8px; text-align:left;'>Lineup (5 Players)</th></tr>";
+            
+            // Generate 8 rotations (Start Q1, Mid Q1, Start Q2, Mid Q2, etc.)
+            for(let i=0; i<8; i++) {
+                const lineup = [];
+                // Simple rotating algorithm: (i*5 + j) % p.length
+                for(let j=0; j<5; j++) lineup.push(p[(i*5 + j) % p.length].name);
+                
+                const period = (i%2==0?'Start':'Mid') + ' Q' + (Math.floor(i/2)+1);
+                
+                html += `<tr>
+                    <td style='border:1px solid #333; padding:8px;'>${period}</td>
+                    <td style='border:1px solid #333; padding:8px;'>${lineup.join(', ')}</td>
+                </tr>`;
+            }
+            html += "</table>";
+            
+            document.getElementById('plan-container').innerHTML = html;
+        }
+        
+        function exportPlanCSV() {
+            const p = [...trPlayers];
+            if(p.length < 5) {
+                alert("Generate a plan first.");
+                return;
+            }
+            
+            const posOrder = { 'PG': 1, 'SG': 2, 'SF': 3, 'PF': 4, 'C': 5 };
+            p.sort((a, b) => (posOrder[a.position] || 6) - (posOrder[b.position] || 6));
+
+            let csv = "Period,Player 1,Player 2,Player 3,Player 4,Player 5\n";
+            for(let i=0; i<8; i++) {
+                const lineup = [];
+                for(let j=0; j<5; j++) lineup.push(p[(i*5 + j) % p.length].name);
+                csv += `${(i%2==0?'Start':'Mid') + ' Q' + (Math.floor(i/2)+1)},${lineup.join(',')}\n`;
+            }
+            downloadCSV(csv, "TIU_Rotation_Plan.csv");
+        }
+
+        function printPlan() { 
+            const content = document.getElementById('plan-container').innerHTML; 
+            if(!content) { alert("Generate a plan first."); return; } 
+            const w = window.open('', '', 'height=600,width=800'); 
+            w.document.write('<html><head><title>TIU Plan</title><style>table{width:100%; border-collapse:collapse;} th, td{border:1px solid #333; padding:8px; text-align:left;}</style></head><body><h2>TIU Rotation Plan</h2>'+content+'</body></html>'); 
+            w.document.close(); 
+            w.print(); 
+        }
+
+        function generateRecommendation() {
+            const c = trPlayers.filter(p=>p.isOnCourt); const b = trPlayers.filter(p=>!p.isOnCourt); if(!c.length || !b.length) return;
+            c.sort((x,y) => y.currentFatigue - x.currentFatigue); b.sort((x,y) => x.currentFatigue - y.currentFatigue);
+            
+            // Check for fatigue mode tiebreaker (time)
+            if (!equityMode) {
+                if (c.length > 1 && c[0].currentFatigue === c[1].currentFatigue) {
+                    c.sort((x,y) => y.totalTime - x.totalTime);
+                }
+                if (b.length > 1 && b[0].currentFatigue === b[1].currentFatigue) {
+                    b.sort((x,y) => x.totalTime - y.totalTime);
+                }
+            }
+
+
+            document.getElementById('feedback-text').innerHTML = `Sub OUT <b>${c[0].name}</b>, IN <b>${b[0].name}</b>`;
+            document.getElementById('coach-feedback').dataset.outId = c[0].id;
+            document.getElementById('coach-feedback').dataset.inId = b[0].id;
+            document.getElementById('coach-feedback').style.display = 'block'; 
+        }
+    </script>
+</body>
+</html>
