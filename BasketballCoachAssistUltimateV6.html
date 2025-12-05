@@ -1,0 +1,1039 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TIU Ultimate Coaching Suite</title>
+    <style>
+        /* --- GLOBAL & THEME --- */
+        :root {
+            --primary: #1a237e;     /* Deep Blue */
+            --accent: #ff6f00;      /* Basketball Orange */
+            --bg: #f0f2f5;
+            --success: #2e7d32;
+            --danger: #c62828;
+            --equity: #0097a7;
+            --dark-panel: #222;
+        }
+        
+        * { box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+            background-color: var(--bg); 
+            color: #333; 
+            margin: 0; 
+            padding: 0; 
+            display: flex; 
+            flex-direction: column; 
+            min-height: 100vh; 
+        }
+
+        /* --- NAVIGATION --- */
+        .app-nav {
+            background: var(--primary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        /* BRANDING: Nav Logo */
+        .nav-brand {
+            color: white;
+            font-weight: 800;
+            font-size: 1.2rem;
+            letter-spacing: 2px;
+            opacity: 0.9;
+        }
+
+        .nav-items { display: flex; }
+
+        .nav-btn {
+            background: transparent;
+            border: none;
+            color: rgba(255,255,255,0.6);
+            padding: 15px 20px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            border-bottom: 4px solid transparent;
+            transition: all 0.3s;
+        }
+        .nav-btn:hover { color: white; background: rgba(255,255,255,0.05); }
+        .nav-btn.active { color: white; border-bottom-color: var(--accent); background: rgba(255,255,255,0.1); }
+
+        /* --- VIEW MANAGEMENT --- */
+        .view-section { display: none; width: 100%; flex: 1; padding-bottom: 50px;}
+        .view-section.active { display: block; }
+
+        /* --- SHARED COMPONENTS --- */
+        .action-btn { padding: 8px 15px; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9rem; font-weight: 600; transition: 0.2s; }
+        .btn-blue { background: var(--primary); color: white; }
+        .btn-orange { background: var(--accent); color: white; }
+        .btn-red { background: var(--danger); color: white; }
+        .btn-green { background: var(--success); color: white; }
+        
+        .panel { background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); padding: 20px; margin: 20px auto; max-width: 1100px; }
+
+        /* ========================================= */
+        /* TAB 1: ROTATION TRACKER STYLES */
+        /* ========================================= */
+        .tr-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 15px; margin-bottom: 20px; }
+        .tr-brand h2 { margin: 0; color: var(--primary); }
+        .game-clock { font-family: 'Courier New', monospace; font-size: 2rem; font-weight: bold; color: #333; }
+        
+        .mode-container { display: flex; justify-content: center; align-items: center; background: #f9f9f9; padding: 10px; border-radius: 8px; margin-bottom: 20px; gap: 15px; }
+        .switch { position: relative; display: inline-block; width: 50px; height: 28px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--equity); }
+        input:checked + .slider:before { transform: translateX(22px); }
+
+        .game-board { display: grid; grid-template-columns: 1fr; gap: 20px; }
+        @media (min-width: 768px) { .game-board { grid-template-columns: 1fr 1fr; } }
+        .court-area, .bench-area { background: #fff; padding: 15px; border-radius: 8px; border: 1px solid #ddd; }
+        .court-area { border: 2px solid var(--primary); }
+
+        .player-card { display: flex; align-items: center; background: #fff; border: 1px solid #eee; border-radius: 6px; padding: 10px; margin-bottom: 8px; }
+        .pos-badge { background: #eee; color: #555; font-size: 0.75rem; font-weight: bold; padding: 4px; border-radius: 4px; margin-right: 10px; width: 35px; text-align: center; }
+        .player-info { flex: 1; }
+        .bar-container { height: 6px; background: #eee; border-radius: 3px; margin-top: 5px; width: 100%; overflow: hidden; }
+        .status-bar { height: 100%; transition: width 0.5s, background-color 0.5s; }
+
+        /* ========================================= */
+        /* TAB 2: STAT TRACKER STYLES */
+        /* ========================================= */
+        #view-stats { background-color: #111; min-height: calc(100vh - 50px); color: white; padding-top: 1px; }
+        
+        .st-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; padding: 15px; }
+        .st-card { background: #333; padding: 15px; border-radius: 8px; text-align: center; cursor: pointer; border: 2px solid transparent; transition: 0.2s; }
+        .st-card.selected { border-color: var(--accent); background: #444; }
+        .st-name { font-weight: bold; font-size: 1.1rem; display: block; margin-bottom: 5px; color: white; }
+        .st-detail { font-size: 0.9rem; color: #aaa; }
+
+        .st-controls { position: fixed; bottom: 0; left: 0; width: 100%; background: #222; padding: 15px; border-top: 1px solid #444; z-index: 100; }
+        .st-buttons { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 10px; max-width: 1100px; margin: 0 auto 10px auto; }
+        .st-btn { padding: 15px 5px; border: none; border-radius: 5px; font-weight: bold; font-size: 1rem; color: white; cursor: pointer; }
+        .st-btn:active { transform: scale(0.95); }
+        
+        /* Stat Button Colors */
+        .sb-1 { background-color: #6c757d; }
+        .sb-2 { background-color: var(--accent); }
+        .sb-3 { background-color: #d35400; }
+        .sb-reb { background-color: #28a745; }
+        .sb-ast { background-color: #17a2b8; }
+        .sb-stl { background-color: #6610f2; }
+        .sb-blk { background-color: #e83e8c; }
+        .sb-to { background-color: #dc3545; }
+        .sb-foul { background-color: #343a40; border: 1px solid #555; }
+
+        .st-table-container { padding: 15px; margin-bottom: 150px; overflow-x: auto; }
+        .st-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; color: #ddd; }
+        .st-table th, .st-table td { padding: 10px; border-bottom: 1px solid #444; text-align: center; }
+        .st-table th { color: var(--accent); }
+        .st-table td:first-child { text-align: left; font-weight: bold; color: white; }
+
+        /* ========================================= */
+        /* TAB 3: DESIGNER STYLES */
+        /* ========================================= */
+        .designer-container { 
+            display: grid; 
+            grid-template-columns: 200px 1fr 200px; 
+            gap: 15px; 
+            max-width: 99vw;
+            margin: 10px auto; 
+            padding: 0 10px; 
+        }
+        
+        .tool-sidebar { background: white; padding: 15px; border-radius: 8px; }
+        .tool-btn { width: 100%; padding: 10px; margin-bottom: 5px; border: 1px solid #ddd; background: #f8f9fa; cursor: pointer; text-align: left; }
+        .tool-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+        
+        #court-wrapper { position: relative; background: white; padding: 5px; border: 2px solid #333; }
+        
+        /* FIXED COURT CSS - Using your uploaded image */
+        #basketball-court { 
+            width: 100%; 
+            aspect-ratio: 16/9; 
+            background-color: #e8c288; /* Wood fallback */
+            position: relative; 
+            overflow: hidden; 
+            /* LINK TO UPLOADED IMAGE */
+            background-image: url('Gemini_Generated_Image_1xubrk1xubrk1xub.png');
+            background-size: cover;
+            background-position: center;
+        }
+
+        /* BRANDING: Court Watermark */
+        .court-watermark {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 10rem;
+            font-weight: 900;
+            color: rgba(255, 255, 255, 0.2);
+            pointer-events: none;
+            z-index: 1;
+            font-family: 'Arial Black', sans-serif;
+            letter-spacing: 5px;
+            text-shadow: 0px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        #drawing-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; cursor: crosshair; }
+        .draggable-obj { position: absolute; cursor: grab; z-index: 20; user-select: none; font-weight: bold; }
+        .drag-player { width: 35px; height: 35px; border-radius: 50%; color: white; border: 2px solid white; display:flex; justify-content:center; align-items:center; font-size: 1.1rem; }
+        
+        /* SEQUENCE CONTROLS STYLES */
+        .seq-control-panel {
+            background: #eee;
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        .seq-display {
+            font-weight: bold;
+            font-size: 1.1rem;
+            color: var(--primary);
+            margin: 5px 0;
+            display: block;
+        }
+        .seq-row { display: flex; gap: 5px; justify-content: center; margin-bottom: 5px; }
+
+        /* --- PRINT STYLES --- */
+        @media print {
+            .app-nav, .add-controls, .data-controls, .tool-sidebar, .st-controls, .controls-row, .mode-container, .action-btn { display: none !important; }
+            body, #view-stats { background: white !important; color: black !important; }
+            .view-section { display: none; }
+            .view-section.active { display: block; }
+            .panel, .st-card, .st-grid { box-shadow: none; border: 1px solid #ccc; background: white !important; color: black !important; }
+            .st-name, .st-detail, .st-table td, .st-table th { color: black !important; }
+            .st-table-container { margin-bottom: 0; }
+            #court-wrapper { border: 1px solid black; }
+            .court-watermark { color: rgba(0,0,0,0.05); } 
+            .designer-container { display: block; max-width: 100%; }
+        }
+
+        /* --- MODAL --- */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; justify-content: center; align-items: center; }
+        .modal-content { background: white; width: 90%; max-width: 600px; padding: 20px; border-radius: 8px; }
+        #notification { position: fixed; top: 60px; left: 50%; transform: translateX(-50%); background: var(--success); color: white; padding: 10px 20px; border-radius: 20px; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 2000; }
+    </style>
+</head>
+<body>
+
+    <nav class="app-nav">
+        <div class="nav-brand">TIU</div>
+        
+        <div class="nav-items">
+            <button class="nav-btn active" onclick="switchTab('tracker')">Rotation & Time</button>
+            <button class="nav-btn" onclick="switchTab('stats')">Stat Recorder</button>
+            <button class="nav-btn" onclick="switchTab('designer')">Play Designer</button>
+        </div>
+    </nav>
+
+    <div id="notification">Action Recorded</div>
+
+    <div id="view-tracker" class="view-section active">
+        <div class="panel">
+            <div class="tr-header">
+                <div class="tr-brand">
+                    <h2>TIU Game Tracker</h2>
+                    <span style="color:#777">Manage Substitutions & Fatigue</span>
+                </div>
+                <div style="text-align:right">
+                    <span style="background:var(--accent); color:white; padding:4px 8px; border-radius:4px;" id="quarter-display">Q1</span>
+                    <span class="game-clock" id="clock-display">08:00</span>
+                </div>
+            </div>
+
+            <div class="mode-container">
+                <span style="font-weight:bold; color:#777">Fatigue Mode</span>
+                <label class="switch">
+                    <input type="checkbox" id="mode-switch" onchange="toggleMode()">
+                    <span class="slider round"></span>
+                </label>
+                <span style="font-weight:bold; color:#777">Equal Play Mode</span>
+            </div>
+
+            <div class="controls-row" style="display:flex; gap:10px; margin-bottom:20px;">
+                <button id="game-toggle" class="action-btn btn-green" style="flex:2; padding:12px; font-size:1.1rem;" onclick="toggleGame()">Start Clock</button>
+                <button id="next-q-btn" class="action-btn btn-blue" style="flex:1; display:none;" onclick="nextQuarter()">Start Next Q</button>
+                <button class="action-btn btn-blue" onclick="openPlanner()">Auto-Plan</button>
+            </div>
+
+            <div id="coach-feedback" style="background:#e0f7fa; padding:10px; margin-bottom:15px; border-radius:4px; display:none; border-left:4px solid var(--equity);">
+                <span id="feedback-text"></span>
+                <button class="action-btn btn-blue" style="float:right; padding:4px 8px;" onclick="applySuggestion()">Swap</button>
+            </div>
+
+            <div class="game-board">
+                <div class="court-area">
+                    <h3 style="margin-top:0; border-bottom:1px solid #eee;">On Court <span id="court-count">0/5</span></h3>
+                    <div id="court-list"></div>
+                </div>
+                <div class="bench-area">
+                    <h3 style="margin-top:0; border-bottom:1px solid #eee;">Bench</h3>
+                    <div id="bench-list"></div>
+                </div>
+            </div>
+
+            <div class="add-controls" style="background:#f8f9fa; padding:15px; margin-top:20px; border-radius:8px; display:flex; gap:10px; justify-content:center; flex-wrap: wrap;">
+                <input type="text" id="player-name" placeholder="New Player Name" style="padding:8px; flex: 1; min-width: 120px;">
+                <select id="player-position" style="padding:8px;">
+                    <option value="PG">PG</option><option value="SG">SG</option>
+                    <option value="SF">SF</option><option value="PF">PF</option><option value="C">C</option>
+                </select>
+                <button class="action-btn btn-blue" onclick="addPlayer()">+ Add</button>
+                <button class="action-btn btn-green" onclick="openBulkImport()">Bulk Import</button>
+                <button class="action-btn btn-orange" onclick="generateRecommendation()">Suggest Sub</button>
+            </div>
+
+            <div class="data-controls" style="margin-top:20px; text-align:center;">
+                <button class="action-btn" style="border:1px solid #ccc" onclick="exportTimeStats()">Export Time CSV</button>
+                <button class="action-btn" style="border:1px solid #ccc" onclick="window.print()">Print Report</button>
+                <button class="action-btn btn-red" onclick="resetAll()">New Game (Reset All)</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="view-stats" class="view-section">
+        <div style="text-align: center; margin: 15px; color: #888;">Select a player, then tap a stat button below.</div>
+        
+        <div class="st-grid" id="st-player-grid">
+            </div>
+
+        <div class="st-table-container">
+            <h3 style="color:white; margin-top:0;">TIU Box Score</h3>
+            <table class="st-table">
+                <thead>
+                    <tr>
+                        <th>Player</th><th>PTS</th><th>REB</th><th>AST</th><th>STL</th><th>BLK</th><th>TO</th><th>PF</th>
+                    </tr>
+                </thead>
+                <tbody id="st-table-body"></tbody>
+            </table>
+            <button class="action-btn btn-green" style="margin-top:10px; width:100%;" onclick="exportGameStats()">Download Box Score CSV</button>
+        </div>
+
+        <div class="st-controls">
+            <div class="st-buttons">
+                <button class="st-btn sb-1" onclick="addStat('ft')">+1 FT</button>
+                <button class="st-btn sb-2" onclick="addStat('fg')">+2 FG</button>
+                <button class="st-btn sb-3" onclick="addStat('zp')">+3 PT</button>
+                <button class="st-btn sb-reb" onclick="addStat('reb')">REB</button>
+                <button class="st-btn sb-ast" onclick="addStat('ast')">AST</button>
+                <button class="st-btn sb-stl" onclick="addStat('stl')">STL</button>
+                <button class="st-btn sb-blk" onclick="addStat('blk')">BLK</button>
+                <button class="st-btn sb-to" onclick="addStat('to')">TO</button>
+            </div>
+            <div style="max-width:1100px; margin:0 auto; display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                <button class="st-btn sb-foul" onclick="addStat('pf')">FOUL</button>
+                <button class="st-btn" style="background:#555" onclick="undoStat()">UNDO LAST</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="view-designer" class="view-section">
+        <div class="designer-container">
+            <div class="tool-sidebar">
+                <h3>TIU Tools</h3>
+                <button class="tool-btn active" id="tool-cut" onclick="setTool('cut')">✂️ Cut (Solid)</button>
+                <button class="tool-btn" id="tool-pass" onclick="setTool('pass')">🏀 Pass (Dashed)</button>
+                <button class="tool-btn" id="tool-dribble" onclick="setTool('dribble')">〰️ Dribble (Wavy)</button>
+                <button class="tool-btn" id="tool-screen" onclick="setTool('screen')">🛑 Screen (T)</button>
+                <hr>
+                <button class="tool-btn" onclick="addObj('player')">👤 Add Player</button>
+                <button class="tool-btn" onclick="addObj('text')">Aa Add Text</button>
+                <button class="tool-btn" style="color:red" onclick="clearCanvas(true)">🗑️ Clear Frame</button>
+                <div style="margin-top:20px; display:flex; gap:5px;">
+                    <div style="width:20px; height:20px; background:#1a237e; cursor:pointer;" onclick="setColor('#1a237e')"></div>
+                    <div style="width:20px; height:20px; background:#ff6f00; cursor:pointer;" onclick="setColor('#ff6f00')"></div>
+                    <div style="width:20px; height:20px; background:#c62828; cursor:pointer;" onclick="setColor('#c62828')"></div>
+                </div>
+            </div>
+
+            <div id="court-wrapper">
+                <div id="basketball-court">
+                    <div class="court-watermark">TIU</div>
+                    <canvas id="drawing-canvas"></canvas>
+                    <div id="objects-layer"></div>
+                </div>
+            </div>
+
+            <div class="tool-sidebar">
+                <h3>Play Sequence</h3>
+                <div class="seq-control-panel">
+                    <span class="seq-display" id="seq-step-display">Step 1 / 1</span>
+                    <div class="seq-row">
+                        <button class="action-btn btn-blue" onclick="prevStep()">Prev</button>
+                        <button class="action-btn btn-blue" onclick="nextStep()">Next</button>
+                    </div>
+                    <div class="seq-row">
+                        <button class="action-btn btn-green" onclick="addStep()" style="width:100%">+ Add Next Step</button>
+                    </div>
+                     <button class="action-btn btn-red" onclick="deleteStep()" style="font-size:0.8rem; padding:4px;">Delete Step</button>
+                </div>
+
+                <hr>
+                <h3>Export</h3>
+                <button class="tool-btn" onclick="savePlayJSON()">💾 Save Play File</button>
+                <button class="tool-btn" onclick="document.getElementById('imp-file').click()">📂 Load Play File</button>
+                <input type="file" id="imp-file" style="display:none" onchange="loadPlayJSON(this)">
+                <button class="tool-btn" onclick="window.print()">🖨️ Print Play</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="planner-modal" class="modal">
+        <div class="modal-content">
+            <h3>TIU Auto-Scheduler</h3>
+            <p>Generates a fair rotation plan for 8 shifts (start and middle of each quarter).</p>
+            <button class="action-btn btn-blue" onclick="generatePlan()">Generate</button>
+            <button class="action-btn" onclick="document.getElementById('planner-modal').style.display='none'">Close</button>
+            <div id="plan-container" style="margin-top:15px; max-height:300px; overflow-y:auto;"></div>
+        </div>
+    </div>
+
+    <div id="bulk-modal" class="modal">
+        <div class="modal-content">
+            <h3>Bulk Import Roster</h3>
+            <p>Paste list below. Format: <b>Name, Position</b> per line.<br><small>Example: LeBron James, SF</small></p>
+            <textarea id="bulk-input" rows="8" style="width:100%; margin-bottom:10px; padding:10px; font-family:monospace;" placeholder="John Doe, PG&#10;Jane Smith, C"></textarea>
+            <button class="action-btn btn-green" style="width:100%; margin-bottom:10px;" onclick="processBulkImport()">Import Players</button>
+            <button class="action-btn btn-red" style="width:100%;" onclick="document.getElementById('bulk-modal').style.display='none'">Cancel</button>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // SHARED STATE & INIT
+        // ==========================================
+        const STORE_KEY = 'tiu_ultimate_suite_v2'; // Bump version
+        
+        let trPlayers = []; 
+        let stPlayers = [];
+        let statHistory = [];
+        
+        let currentQuarter = 1;
+        let gameSeconds = 8 * 60; // 8 mins
+        let gameActive = false;
+        let timerInterval = null;
+        let equityMode = false;
+        let selectedStatPlayerId = null;
+
+        // Init
+        window.onload = function() {
+            loadData();
+            initDesigner();
+            switchTab('tracker');
+        };
+
+        function switchTab(tab) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(`view-${tab}`).classList.add('active');
+            
+            const btns = document.querySelectorAll('.nav-btn');
+            btns.forEach(b => {
+                if(b.getAttribute('onclick').includes(tab)) b.classList.add('active');
+            });
+
+            if(tab === 'designer') resizeCanvas();
+        }
+
+        function loadData() {
+            const saved = localStorage.getItem(STORE_KEY);
+            if(saved) {
+                const data = JSON.parse(saved);
+                trPlayers = data.trPlayers || [];
+                stPlayers = data.stPlayers || [];
+                currentQuarter = data.currentQuarter || 1;
+                gameSeconds = data.gameSeconds !== undefined ? data.gameSeconds : 480;
+                statHistory = data.statHistory || [];
+            }
+            renderTracker();
+            renderStats();
+            updateClockUI();
+        }
+
+        function saveData() {
+            const data = {
+                trPlayers, stPlayers, currentQuarter, gameSeconds, statHistory
+            };
+            localStorage.setItem(STORE_KEY, JSON.stringify(data));
+        }
+
+        function resetAll() {
+            if(confirm("Clear ALL data and Roster?")) {
+                localStorage.removeItem(STORE_KEY);
+                location.reload();
+            }
+        }
+
+        // ==========================================
+        // LOGIC: ROSTER & BULK IMPORT
+        // ==========================================
+        function addPlayer() {
+            const name = document.getElementById('player-name').value.trim();
+            const pos = document.getElementById('player-position').value;
+            if(!name) return;
+            createPlayer(name, pos);
+            document.getElementById('player-name').value = '';
+            showNotif(`Added ${name}`);
+        }
+
+        function createPlayer(name, pos) {
+            const newId = Date.now() + Math.random(); // prevent ID collision
+            // Add to Time Tracker
+            trPlayers.push({ 
+                id: newId, name: name, position: pos, 
+                totalTime: 0, currentFatigue: 0, isOnCourt: false, recoveryCounter: 0 
+            });
+            // Add to Stat Tracker
+            stPlayers.push({
+                id: newId, name: name,
+                stats: { ft: 0, fg: 0, zp: 0, reb: 0, ast: 0, stl: 0, blk: 0, to: 0, pf: 0 }
+            });
+            saveData();
+            renderTracker();
+            renderStats();
+        }
+
+        function openBulkImport() { document.getElementById('bulk-modal').style.display = 'flex'; }
+        
+        function processBulkImport() {
+            const raw = document.getElementById('bulk-input').value;
+            if(!raw.trim()) return;
+
+            const lines = raw.split('\n');
+            let count = 0;
+            lines.forEach(line => {
+                const parts = line.split(',');
+                if(parts.length > 0 && parts[0].trim()) {
+                    const name = parts[0].trim();
+                    const pos = parts[1] ? parts[1].trim().toUpperCase() : 'PG'; 
+                    createPlayer(name, pos);
+                    count++;
+                }
+            });
+            
+            document.getElementById('bulk-modal').style.display = 'none';
+            document.getElementById('bulk-input').value = '';
+            showNotif(`Imported ${count} players`);
+        }
+
+        // ==========================================
+        // LOGIC: TIME TRACKER
+        // ==========================================
+        function toggleGame() {
+            if(gameSeconds <= 0 && !gameActive) return;
+            gameActive = !gameActive;
+            const btn = document.getElementById('game-toggle');
+            if(gameActive) {
+                btn.textContent = "Pause Clock";
+                btn.className = "action-btn btn-red";
+                document.getElementById('next-q-btn').style.display = 'none';
+                timerInterval = setInterval(gameTick, 1000);
+            } else {
+                btn.textContent = "Resume Clock";
+                btn.className = "action-btn btn-green";
+                clearInterval(timerInterval);
+                saveData();
+            }
+        }
+
+        function gameTick() {
+            if(gameSeconds > 0) {
+                gameSeconds--;
+                updateClockUI();
+                trPlayers.forEach(p => {
+                    if(p.isOnCourt) {
+                        p.totalTime++;
+                        p.currentFatigue++;
+                    } else {
+                        p.recoveryCounter++;
+                        if(p.recoveryCounter >= 4) { // Recovery Rate
+                            if(p.currentFatigue > 0) p.currentFatigue--;
+                            p.recoveryCounter = 0;
+                        }
+                    }
+                });
+                renderTracker();
+                if(gameSeconds % 10 === 0) saveData(); 
+            } else {
+                toggleGame();
+                document.getElementById('game-toggle').textContent = "End of Quarter";
+                document.getElementById('next-q-btn').style.display = 'block';
+                alert("Quarter Ended");
+            }
+        }
+
+        function nextQuarter() {
+            currentQuarter++;
+            gameSeconds = 8 * 60;
+            document.getElementById('quarter-display').textContent = "Q" + currentQuarter;
+            updateClockUI();
+            document.getElementById('next-q-btn').style.display = 'none';
+            document.getElementById('game-toggle').textContent = "Start Clock";
+            document.getElementById('game-toggle').className = "action-btn btn-green";
+            trPlayers.forEach(p => { p.currentFatigue = Math.max(0, p.currentFatigue - 30); });
+            saveData();
+            renderTracker();
+        }
+
+        function updateClockUI() {
+            const m = Math.floor(gameSeconds / 60);
+            const s = gameSeconds % 60;
+            document.getElementById('clock-display').textContent = `${m<10?'0'+m:m}:${s<10?'0'+s:s}`;
+        }
+
+        function toggleMode() {
+            equityMode = document.getElementById('mode-switch').checked;
+            renderTracker();
+        }
+
+        function subPlayer(id) {
+            const p = trPlayers.find(x => x.id === id);
+            const onCourt = trPlayers.filter(x => x.isOnCourt).length;
+            if(!p.isOnCourt && onCourt >= 5) { alert("Court is full (5 players). Sub someone out first."); return; }
+            p.isOnCourt = !p.isOnCourt;
+            saveData();
+            renderTracker();
+        }
+
+        function renderTracker() {
+            const courtList = document.getElementById('court-list');
+            const benchList = document.getElementById('bench-list');
+            courtList.innerHTML = ''; benchList.innerHTML = '';
+            document.getElementById('court-count').innerText = `${trPlayers.filter(p=>p.isOnCourt).length}/5`;
+
+            let courtP = trPlayers.filter(p => p.isOnCourt);
+            let benchP = trPlayers.filter(p => !p.isOnCourt);
+
+            if(equityMode) {
+                courtP.sort((a,b) => b.totalTime - a.totalTime); // Needs Rest
+                benchP.sort((a,b) => a.totalTime - b.totalTime); // Needs Play
+            } else {
+                courtP.sort((a,b) => b.currentFatigue - a.currentFatigue); // Most tired first
+                benchP.sort((a,b) => a.currentFatigue - b.currentFatigue); // Freshest first
+            }
+
+            const createCard = (p) => {
+                const elapsed = ((currentQuarter-1)*480) + (480 - gameSeconds);
+                let pct, color;
+                
+                if(equityMode) {
+                    pct = (p.totalTime / Math.max(1, elapsed)) * 100;
+                    color = 'var(--equity)';
+                } else {
+                    pct = Math.max(0, 100 - ((p.currentFatigue/480)*100));
+                    color = pct<30 ? 'var(--danger)' : (pct<60?'#fbc02d':'var(--success)');
+                }
+                
+                return `
+                <div class="player-card">
+                    <div class="pos-badge">${p.position}</div>
+                    <div class="player-info">
+                        <strong>${p.name}</strong> <span style="color:#777; font-size:0.8rem">(${formatTime(p.totalTime)})</span>
+                        <div class="bar-container"><div class="status-bar" style="width:${Math.min(100, pct)}%; background:${color}"></div></div>
+                    </div>
+                    <button class="action-btn ${p.isOnCourt?'':'btn-green'}" style="margin-left:10px; background:${p.isOnCourt?'#eee':'var(--primary)'}; color:${p.isOnCourt?'#333':'white'}" onclick="subPlayer(${p.id})">
+                        ${p.isOnCourt ? 'Sit' : 'Play'}
+                    </button>
+                </div>`;
+            };
+
+            courtP.forEach(p => courtList.innerHTML += createCard(p));
+            benchP.forEach(p => benchList.innerHTML += createCard(p));
+        }
+
+        // ==========================================
+        // LOGIC: STAT TRACKER
+        // ==========================================
+        function renderStats() {
+            const grid = document.getElementById('st-player-grid');
+            const tbody = document.getElementById('st-table-body');
+            grid.innerHTML = '';
+            tbody.innerHTML = '';
+
+            stPlayers.forEach(p => {
+                const pts = p.stats.ft + (p.stats.fg*2) + (p.stats.zp*3);
+                
+                const card = document.createElement('div');
+                card.className = `st-card ${selectedStatPlayerId === p.id ? 'selected' : ''}`;
+                card.onclick = () => { selectedStatPlayerId = p.id; renderStats(); };
+                card.innerHTML = `<span class="st-name">${p.name}</span><span class="st-detail">${pts} PTS | ${p.stats.pf} PF</span>`;
+                grid.appendChild(card);
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${p.name}</td><td>${pts}</td><td>${p.stats.reb}</td><td>${p.stats.ast}</td>
+                        <td>${p.stats.stl}</td><td>${p.stats.blk}</td><td>${p.stats.to}</td><td>${p.stats.pf}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        function addStat(type) {
+            if(!selectedStatPlayerId) { showNotif("Select a player first!"); return; }
+            const p = stPlayers.find(x => x.id === selectedStatPlayerId);
+            if(p) {
+                p.stats[type]++;
+                statHistory.push({ playerId: p.id, type: type });
+                saveData();
+                renderStats();
+                showNotif(`+1 ${type.toUpperCase()} for ${p.name}`);
+            }
+        }
+
+        function undoStat() {
+            if(!statHistory.length) return;
+            const last = statHistory.pop();
+            const p = stPlayers.find(x => x.id === last.playerId);
+            if(p && p.stats[last.type] > 0) {
+                p.stats[last.type]--;
+                saveData();
+                renderStats();
+                showNotif("Undid last action");
+            }
+        }
+
+        // ==========================================
+        // LOGIC: DESIGNER (CANVAS)
+        // ==========================================
+        let canvas, ctx, isDrawing = false, currentTool = 'cut';
+        let drawPaths = [], currentPath = [];
+        let currentColor = '#1a237e';
+        
+        // SEQUENCE STATE
+        let playSequence = [{ paths: [], objects: [] }]; // Array of frames
+        let currentSeqIndex = 0;
+
+        function initDesigner() {
+            canvas = document.getElementById('drawing-canvas');
+            ctx = canvas.getContext('2d');
+            
+            const start = (e) => {
+                isDrawing = true;
+                const r = canvas.getBoundingClientRect();
+                const x = (e.clientX || e.touches[0].clientX) - r.left;
+                const y = (e.clientY || e.touches[0].clientY) - r.top;
+                currentPath = [{x, y}];
+            };
+            const move = (e) => {
+                if(!isDrawing) return;
+                e.preventDefault();
+                const r = canvas.getBoundingClientRect();
+                const x = (e.clientX || e.touches[0].clientX) - r.left;
+                const y = (e.clientY || e.touches[0].clientY) - r.top;
+                currentPath.push({x, y});
+                redraw();
+            };
+            const end = () => {
+                if(!isDrawing) return;
+                isDrawing = false;
+                if(currentPath.length > 1) {
+                    drawPaths.push({ type: currentTool, color: currentColor, points: [...currentPath] });
+                }
+                redraw();
+            };
+
+            canvas.addEventListener('mousedown', start);
+            canvas.addEventListener('mousemove', move);
+            window.addEventListener('mouseup', end);
+            canvas.addEventListener('touchstart', start);
+            canvas.addEventListener('touchmove', move);
+            window.addEventListener('touchend', end);
+            
+            updateSeqUI();
+        }
+
+        function resizeCanvas() {
+            const wrapper = document.getElementById('basketball-court');
+            canvas.width = wrapper.clientWidth;
+            canvas.height = wrapper.clientHeight;
+            redraw();
+        }
+
+        function setTool(t) {
+            currentTool = t;
+            document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('tool-'+t).classList.add('active');
+        }
+        function setColor(c) { currentColor = c; }
+
+        function redraw() {
+            ctx.clearRect(0,0,canvas.width, canvas.height);
+            
+            const drawPath = (p, color, type) => {
+                ctx.beginPath();
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 3;
+                ctx.setLineDash(type === 'pass' ? [10,10] : []);
+                
+                ctx.moveTo(p[0].x, p[0].y);
+                for(let i=1; i<p.length; i++) ctx.lineTo(p[i].x, p[i].y);
+                ctx.stroke();
+
+                if(type !== 'screen' && p.length > 5) {
+                    const end = p[p.length-1];
+                    const prev = p[Math.max(0, p.length-5)];
+                    const ang = Math.atan2(end.y - prev.y, end.x - prev.x);
+                    ctx.beginPath();
+                    ctx.setLineDash([]);
+                    ctx.moveTo(end.x, end.y);
+                    ctx.lineTo(end.x - 15 * Math.cos(ang - Math.PI/6), end.y - 15 * Math.sin(ang - Math.PI/6));
+                    ctx.moveTo(end.x, end.y);
+                    ctx.lineTo(end.x - 15 * Math.cos(ang + Math.PI/6), end.y - 15 * Math.sin(ang + Math.PI/6));
+                    ctx.stroke();
+                }
+                if(type === 'screen' && p.length > 5) {
+                    const end = p[p.length-1];
+                    const prev = p[Math.max(0, p.length-5)];
+                    const ang = Math.atan2(end.y - prev.y, end.x - prev.x);
+                    ctx.beginPath();
+                    ctx.setLineDash([]);
+                    ctx.moveTo(end.x - 15*Math.sin(ang), end.y + 15*Math.cos(ang));
+                    ctx.lineTo(end.x + 15*Math.sin(ang), end.y - 15*Math.cos(ang));
+                    ctx.stroke();
+                }
+            };
+
+            drawPaths.forEach(p => drawPath(p.points, p.color, p.type));
+            if(isDrawing) drawPath(currentPath, currentColor, currentTool);
+        }
+
+        // --- SEQUENCE LOGIC ---
+        function updateSeqUI() {
+            document.getElementById('seq-step-display').innerText = `Step ${currentSeqIndex + 1} / ${playSequence.length}`;
+        }
+
+        function captureFrame() {
+            // Save current objects to memory
+            const objs = [];
+            document.querySelectorAll('.draggable-obj').forEach(el => {
+                objs.push({
+                    left: el.style.left,
+                    top: el.style.top,
+                    html: el.innerHTML
+                });
+            });
+            // Update current frame data
+            playSequence[currentSeqIndex] = {
+                paths: [...drawPaths],
+                objects: objs
+            };
+        }
+
+        function loadFrame(index) {
+            currentSeqIndex = index;
+            const frame = playSequence[index];
+            
+            // Restore paths
+            drawPaths = [...frame.paths];
+            redraw();
+
+            // Restore objects
+            const layer = document.getElementById('objects-layer');
+            layer.innerHTML = '';
+            frame.objects.forEach(obj => {
+                const div = document.createElement('div');
+                div.className = 'draggable-obj';
+                div.style.left = obj.left;
+                div.style.top = obj.top;
+                div.innerHTML = obj.html;
+                makeDraggable(div); // Re-attach listeners
+                layer.appendChild(div);
+            });
+            updateSeqUI();
+        }
+
+        function addStep() {
+            captureFrame(); // Save current before moving
+            
+            // Create new frame: Copy objects (so players stay), Clear paths (so movement is fresh)
+            const currentObjs = playSequence[currentSeqIndex].objects;
+            const newFrame = {
+                paths: [], // Empty lines
+                objects: JSON.parse(JSON.stringify(currentObjs)) // Deep copy player positions
+            };
+            
+            playSequence.splice(currentSeqIndex + 1, 0, newFrame);
+            loadFrame(currentSeqIndex + 1);
+        }
+
+        function prevStep() {
+            if(currentSeqIndex > 0) {
+                captureFrame();
+                loadFrame(currentSeqIndex - 1);
+            }
+        }
+
+        function nextStep() {
+            if(currentSeqIndex < playSequence.length - 1) {
+                captureFrame();
+                loadFrame(currentSeqIndex + 1);
+            }
+        }
+        
+        function deleteStep() {
+            if(playSequence.length <= 1) { alert("Cannot delete the only step."); return; }
+            if(confirm("Delete this step?")) {
+                playSequence.splice(currentSeqIndex, 1);
+                if(currentSeqIndex >= playSequence.length) currentSeqIndex--;
+                loadFrame(currentSeqIndex);
+            }
+        }
+
+        // --- OBJECTS ---
+        function makeDraggable(div) {
+            let isDrag = false;
+            div.addEventListener('mousedown', () => { isDrag = true; });
+            window.addEventListener('mouseup', () => { isDrag = false; });
+            window.addEventListener('mousemove', (e) => {
+                if(!isDrag) return;
+                const r = document.getElementById('basketball-court').getBoundingClientRect();
+                div.style.left = (e.clientX - r.left) + 'px';
+                div.style.top = (e.clientY - r.top) + 'px';
+            });
+            div.oncontextmenu = (e) => { 
+                e.preventDefault(); 
+                if(confirm("Remove item?")) div.remove(); 
+            };
+        }
+
+        function addObj(type) {
+            const div = document.createElement('div');
+            div.className = 'draggable-obj';
+            div.style.left = '50%'; div.style.top = '50%';
+            
+            if(type === 'player') {
+                const num = prompt("Number?", "1");
+                div.innerHTML = `<div class="drag-player" style="background:${currentColor}">${num}</div>`;
+            } else {
+                const txt = prompt("Text?", "Pick");
+                div.innerHTML = `<span style="background:white; padding:2px 5px; border:1px solid #333;">${txt}</span>`;
+            }
+            
+            makeDraggable(div);
+            document.getElementById('objects-layer').appendChild(div);
+        }
+
+        function clearCanvas(all) {
+            if(all && confirm("Clear drawing for this step?")) {
+                drawPaths = [];
+                document.getElementById('objects-layer').innerHTML = ''; // Also clears objects
+                redraw();
+            }
+        }
+
+        function savePlayJSON() {
+            captureFrame(); // Ensure latest is saved
+            const data = { sequence: playSequence, width: canvas.width, height: canvas.height };
+            const blob = new Blob([JSON.stringify(data)], {type:'application/json'});
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'TIU_PlaySequence.json';
+            a.click();
+        }
+        function loadPlayJSON(inp) {
+            const f = inp.files[0];
+            const r = new FileReader();
+            r.onload = (e) => {
+                const d = JSON.parse(e.target.result);
+                if(d.sequence) {
+                    playSequence = d.sequence;
+                    loadFrame(0);
+                } else if (d.paths) {
+                    // Legacy single frame support
+                    playSequence = [{ paths: d.paths, objects: [] }];
+                    loadFrame(0);
+                }
+            };
+            r.readAsText(f);
+        }
+
+        // ==========================================
+        // EXPORT HELPERS
+        // ==========================================
+        function formatTime(s) {
+            const m = Math.floor(s/60);
+            const sec = s%60;
+            return `${m}:${sec<10?'0':''}${sec}`;
+        }
+        function showNotif(msg) {
+            const n = document.getElementById('notification');
+            n.innerText = msg; n.style.opacity = 1;
+            setTimeout(() => n.style.opacity = 0, 2000);
+        }
+
+        function exportTimeStats() {
+            let csv = "Name,Pos,TimeFormatted,Seconds\n";
+            trPlayers.forEach(p => csv += `${p.name},${p.position},${formatTime(p.totalTime)},${p.totalTime}\n`);
+            downloadCSV(csv, "TIU_TimeStats.csv");
+        }
+
+        function exportGameStats() {
+            let csv = "Name,PTS,FT,FG,3PT,REB,AST,STL,BLK,TO,PF\n";
+            stPlayers.forEach(p => {
+                const pts = p.stats.ft + (p.stats.fg*2) + (p.stats.zp*3);
+                csv += `${p.name},${pts},${p.stats.ft},${p.stats.fg},${p.stats.zp},${p.stats.reb},${p.stats.ast},${p.stats.stl},${p.stats.blk},${p.stats.to},${p.stats.pf}\n`;
+            });
+            downloadCSV(csv, "TIU_BoxScore.csv");
+        }
+
+        function downloadCSV(content, filename) {
+            const blob = new Blob([content], {type:'text/csv;charset=utf-8;'});
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = filename;
+            link.click();
+        }
+
+        // ==========================================
+        // EXTRAS: AUTO PLANNER
+        // ==========================================
+        function openPlanner() { document.getElementById('planner-modal').style.display = 'flex'; }
+        function generatePlan() {
+            const p = [...trPlayers];
+            if(p.length < 5) { alert("Need 5+ players"); return; }
+            let html = "<table style='width:100%; border-collapse:collapse;'><tr><th>Period</th><th>Lineup</th></tr>";
+            for(let i=0; i<8; i++) {
+                const lineup = [];
+                for(let j=0; j<5; j++) lineup.push(p[(i*5 + j) % p.length].name);
+                html += `<tr><td style='border:1px solid #ddd; padding:5px;'>${i%2==0?'Start':'Mid'} Q${Math.floor(i/2)+1}</td><td style='border:1px solid #ddd; padding:5px;'>${lineup.join(', ')}</td></tr>`;
+            }
+            document.getElementById('plan-container').innerHTML = html + "</table>";
+        }
+        function generateRecommendation() {
+            const c = trPlayers.filter(p=>p.isOnCourt);
+            const b = trPlayers.filter(p=>!p.isOnCourt);
+            if(!c.length || !b.length) return;
+            // Simple Logic: Tired out, Fresh in
+            c.sort((x,y) => y.currentFatigue - x.currentFatigue);
+            b.sort((x,y) => x.currentFatigue - y.currentFatigue);
+            
+            document.getElementById('feedback-text').innerHTML = `Sub OUT <b>${c[0].name}</b>, IN <b>${b[0].name}</b>`;
+            document.getElementById('coach-feedback').style.display = 'block';
+            
+            // Store for auto-apply
+            window.pendingSub = { out: c[0].id, in: b[0].id };
+        }
+        function applySuggestion() {
+            if(window.pendingSub) {
+                subPlayer(window.pendingSub.out);
+                subPlayer(window.pendingSub.in);
+                document.getElementById('coach-feedback').style.display = 'none';
+            }
+        }
+
+    </script>
+</body>
+</html>
