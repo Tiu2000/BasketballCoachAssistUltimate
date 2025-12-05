@@ -156,14 +156,13 @@
         
         #court-wrapper { position: relative; background: white; padding: 5px; border: 2px solid #333; }
         
-        /* FIXED COURT CSS - Using your uploaded image */
+        /* FIXED COURT CSS */
         #basketball-court { 
             width: 100%; 
             aspect-ratio: 16/9; 
             background-color: #e8c288; /* Wood fallback */
             position: relative; 
             overflow: hidden; 
-            /* LINK TO UPLOADED IMAGE */
             background-image: url('Gemini_Generated_Image_1xubrk1xubrk1xub.png');
             background-size: cover;
             background-position: center;
@@ -218,6 +217,8 @@
             #court-wrapper { border: 1px solid black; }
             .court-watermark { color: rgba(0,0,0,0.05); } 
             .designer-container { display: block; max-width: 100%; }
+            /* Hide modal in default print view, unless we are printing the modal specifically */
+            .modal { display: none; } 
         }
 
         /* --- MODAL --- */
@@ -395,9 +396,17 @@
         <div class="modal-content">
             <h3>TIU Auto-Scheduler</h3>
             <p>Generates a fair rotation plan for 8 shifts (start and middle of each quarter).</p>
-            <button class="action-btn btn-blue" onclick="generatePlan()">Generate</button>
-            <button class="action-btn" onclick="document.getElementById('planner-modal').style.display='none'">Close</button>
-            <div id="plan-container" style="margin-top:15px; max-height:300px; overflow-y:auto;"></div>
+            <div style="display:flex; gap:10px; margin-bottom:10px;">
+                <button class="action-btn btn-blue" onclick="generatePlan()" style="flex:1">Generate Plan</button>
+                <button class="action-btn" onclick="document.getElementById('planner-modal').style.display='none'" style="flex:1">Close</button>
+            </div>
+            
+            <div id="plan-container" style="margin-top:15px; max-height:300px; overflow-y:auto; border:1px solid #eee; padding:5px;"></div>
+            
+            <div style="margin-top:15px; display:flex; gap:10px; justify-content:center; border-top:1px solid #eee; padding-top:15px;">
+                <button class="action-btn btn-green" onclick="exportPlanCSV()">Export CSV</button>
+                <button class="action-btn btn-orange" onclick="printPlan()">Print Plan</button>
+            </div>
         </div>
     </div>
 
@@ -1001,6 +1010,7 @@
         // EXTRAS: AUTO PLANNER
         // ==========================================
         function openPlanner() { document.getElementById('planner-modal').style.display = 'flex'; }
+        
         function generatePlan() {
             const p = [...trPlayers];
             if(p.length < 5) { alert("Need 5+ players"); return; }
@@ -1012,6 +1022,37 @@
             }
             document.getElementById('plan-container').innerHTML = html + "</table>";
         }
+        
+        // NEW EXPORT FUNCTION
+        function exportPlanCSV() {
+            const p = [...trPlayers];
+            if(p.length < 5) { alert("Generate a plan first (Need 5+ players)."); return; }
+            let csv = "Period,Player 1,Player 2,Player 3,Player 4,Player 5\n";
+            for(let i=0; i<8; i++) {
+                const periodName = (i%2==0?'Start':'Mid') + ' Q' + (Math.floor(i/2)+1);
+                const lineup = [];
+                for(let j=0; j<5; j++) lineup.push(p[(i*5 + j) % p.length].name);
+                csv += `${periodName},${lineup.join(',')}\n`;
+            }
+            downloadCSV(csv, "TIU_Rotation_Plan.csv");
+        }
+
+        // NEW PRINT FUNCTION
+        function printPlan() {
+            const content = document.getElementById('plan-container').innerHTML;
+            if(!content) { alert("Generate a plan first."); return; }
+            
+            const printWindow = window.open('', '', 'height=600,width=800');
+            printWindow.document.write('<html><head><title>TIU Rotation Plan</title>');
+            printWindow.document.write('<style>body{font-family:sans-serif;} table{width:100%; border-collapse:collapse;} th, td{border:1px solid #333; padding:8px; text-align:left;} th{background:#eee;}</style>');
+            printWindow.document.write('</head><body>');
+            printWindow.document.write('<h2>TIU Auto-Scheduler Rotation Plan</h2>');
+            printWindow.document.write(content);
+            printWindow.document.write('</body></html>');
+            printWindow.document.close();
+            printWindow.print();
+        }
+
         function generateRecommendation() {
             const c = trPlayers.filter(p=>p.isOnCourt);
             const b = trPlayers.filter(p=>!p.isOnCourt);
